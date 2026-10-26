@@ -148,6 +148,61 @@
       border-bottom: 1px dotted var(--accent);
     }
 
+    /* فورم التواصل */
+    .contact-form {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+    .contact-form label {
+      display: grid;
+      gap: 6px;
+      font-weight: 600;
+    }
+    .contact-form input,
+    .contact-form textarea {
+      font: inherit;
+      color: inherit;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      width: 100%;
+    }
+    .contact-form textarea { min-height: 120px; resize: vertical; }
+    .contact-form input:focus,
+    .contact-form textarea:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+    .contact-form .trap { position: absolute; left: -9999px; }
+    .contact-form button {
+      font: inherit;
+      font-weight: 700;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+    }
+    .contact-form button:hover { background: var(--accent-dark); }
+    .contact-form button:disabled { opacity: 0.6; cursor: wait; }
+    .form-error { margin: 0; color: #a3261b; }
+    .form-done {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 24px 16px;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--accent-dark);
+    }
+
     @media (min-width: 560px) {
       .products { grid-template-columns: 1fr 1fr; }
       .product { flex-wrap: wrap; }
@@ -221,6 +276,28 @@
       </ul>
     </section>
 
+    <section id="message">
+      <h2>ابعتلنا رسالة</h2>
+      <form class="contact-form" id="contact-form" novalidate>
+        <label>الاسم
+          <input type="text" name="name" required maxlength="100" autocomplete="name">
+        </label>
+        <label>الموبايل
+          <input type="tel" name="phone" required inputmode="tel" autocomplete="tel" dir="ltr" placeholder="01xxxxxxxxx">
+        </label>
+        <label>الرسالة
+          <textarea name="message" required maxlength="2000"></textarea>
+        </label>
+        <!-- خانة مخفية لصيد البوتات -->
+        <input class="trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <!-- تحقق Cloudflare Turnstile إن اللي بيبعت إنسان -->
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAFm2mFH3_zmq5k6W" data-language="ar"></div>
+        <p class="form-error" id="form-error" role="alert" hidden></p>
+        <button type="submit">ابعت</button>
+      </form>
+      <p class="form-done" id="form-done" role="status" hidden>وصلتنا رسالتك، هنكلّمك في نفس اليوم.</p>
+    </section>
+
     <section id="notes">
       <h2>ملاحظات</h2>
       <ul class="notes">
@@ -233,5 +310,76 @@
     <!-- بيانات خيالية للتدريب — المخبز ده مش موجود، والأرقام والأسعار والعنوان متألّفين. -->
 
   </div>
+
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script>
+    // الفورم بيبعت لـ /api/message (functions/api/message.js)، وهو اللي بيتأكد من Turnstile ويحفظ في Supabase
+    const form = document.getElementById('contact-form');
+    const errorBox = document.getElementById('form-error');
+    const done = document.getElementById('form-done');
+
+    // نحوّل الأرقام العربي لإنجليزي ونشيل المسافات والشرط
+    function normalizePhone(value) {
+      return value
+        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+        .replace(/[\s\-]/g, '')
+        .replace(/^\+?20(?=1)/, '0');
+    }
+
+    function showError(text) {
+      errorBox.textContent = text;
+      errorBox.hidden = false;
+    }
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      errorBox.hidden = true;
+
+      // form.elements لأن form.name بترجع اسم الفورم نفسه مش الخانة
+      const fields = form.elements;
+      const name = fields.name.value.trim();
+      const phone = normalizePhone(fields.phone.value);
+      const message = fields.message.value.trim();
+
+      if (!name || !phone || !message) {
+        showError('من فضلك املا كل الخانات.');
+        return;
+      }
+      if (!/^01[0125][0-9]{8}$/.test(phone)) {
+        showError('رقم الموبايل لازم يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015.');
+        return;
+      }
+      // بوت ملا الخانة المخفية: نتظاهر إن الإرسال نجح
+      if (fields.website.value) {
+        form.hidden = true;
+        done.hidden = false;
+        return;
+      }
+
+      const token = fields['cf-turnstile-response'] ? fields['cf-turnstile-response'].value : '';
+      if (!token) {
+        showError('استنى ثانية لحد ما التحقق يخلص، وبعدين دوس ابعت.');
+        return;
+      }
+
+      const button = form.querySelector('button');
+      button.disabled = true;
+      try {
+        const res = await fetch('/api/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, message, token })
+        });
+        if (!res.ok) throw new Error(res.status);
+        form.hidden = true;
+        done.hidden = false;
+      } catch (err) {
+        showError('حصلت مشكلة في الإرسال، جرّب تاني أو كلّمنا على الموبايل.');
+        button.disabled = false;
+        // كل توكن Turnstile بيتستعمل مرة واحدة بس
+        if (window.turnstile) turnstile.reset();
+      }
+    });
+  </script>
 </body>
 </html>
