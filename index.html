@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>أهلاً</title>
-  <meta http-equiv="refresh" content="3; url=sanbola.html">
+  <!-- احتياطي لو الجافاسكريبت مقفول -->
+  <meta http-equiv="refresh" content="4; url=sanbola.html">
   <style>
     body {
       margin: 0;
@@ -19,10 +20,33 @@
     h1 {
       font-size: 3rem;
       font-weight: 600;
+      /* يختفي بعد ثانيتين */
+      animation: vanish 0.9s ease-in 2s forwards;
+    }
+
+    @keyframes vanish {
+      to {
+        opacity: 0;
+        filter: blur(12px);
+        transform: scale(1.15);
+        letter-spacing: 0.15em;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      @keyframes vanish {
+        to { opacity: 0; }
+      }
     }
   </style>
 </head>
 <body>
   <h1>أهلاً من عبدالرحمن</h1>
+  <script>
+    // بعد ما التأثير يخلص نروح لصفحة المخبز
+    document.querySelector('h1').addEventListener('animationend', function () {
+      location.replace('sanbola.html');
+    });
+  </script>
 </body>
 </html>
