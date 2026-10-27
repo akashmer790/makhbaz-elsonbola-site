@@ -173,6 +173,20 @@
       width: 100%;
     }
     .contact-form textarea { min-height: 120px; resize: vertical; }
+    .contact-form .check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 400;
+      cursor: pointer;
+    }
+    .contact-form .check input {
+      width: 20px;
+      height: 20px;
+      margin: 0;
+      accent-color: var(--accent);
+      flex-shrink: 0;
+    }
     .contact-form input:focus,
     .contact-form textarea:focus {
       outline: 2px solid var(--accent);
@@ -288,6 +302,11 @@
         <label>الرسالة
           <textarea name="message" required maxlength="2000"></textarea>
         </label>
+        <!-- اختياري ومش متعلّم من الأول: العميل هو اللي يختار يتابع معانا -->
+        <label class="check">
+          <input type="checkbox" name="wants_updates">
+          ابعتولي عروضكم ومنتجاتكم الجديدة على رقمي
+        </label>
         <!-- خانة مخفية لصيد البوتات -->
         <input class="trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
         <!-- تحقق Cloudflare Turnstile إن اللي بيبعت إنسان -->
@@ -340,6 +359,7 @@
       const name = fields.name.value.trim();
       const phone = normalizePhone(fields.phone.value);
       const message = fields.message.value.trim();
+      const wants_updates = fields.wants_updates.checked;
 
       if (!name || !phone || !message) {
         showError('من فضلك املا كل الخانات.');
@@ -368,7 +388,7 @@
         const res = await fetch('/api/message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone, message, token })
+          body: JSON.stringify({ name, phone, message, wants_updates, token })
         });
         if (!res.ok) throw new Error(res.status);
         form.hidden = true;

@@ -9,6 +9,10 @@ create table if not exists public.messages (
   created_at timestamptz not null default now()
 );
 
+-- العميل وافق إننا نبعتله العروض والمنتجات الجديدة؟ (اختياري، والافتراضي لأ)
+alter table public.messages
+  add column if not exists wants_updates boolean not null default false;
+
 -- Row Level Security شغال ومن غير ولا سياسة:
 -- المفتاح الـ publishable (anon) ما يقدرش يقرا ولا يضيف ولا يعدّل ولا يمسح.
 alter table public.messages enable row level security;
@@ -21,4 +25,4 @@ revoke all on public.messages from anon, authenticated;
 
 -- الإضافة بتحصل بس من functions/api/message.js على Cloudflare بعد تحقق Turnstile،
 -- بالمفتاح الـ secret (service_role) اللي متخزّن في إعدادات Cloudflare مش في أي ملف.
-grant insert (name, phone, message) on public.messages to service_role;
+grant insert (name, phone, message, wants_updates) on public.messages to service_role;

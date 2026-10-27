@@ -14,11 +14,12 @@ function reply(status, error) {
 }
 
 // تنبيه تيليجرام: لو فشل، الرسالة برضه اتحفظت والزائر مش هيشوف خطأ
-async function notifyTelegram(env, { name, phone, message }) {
+async function notifyTelegram(env, { name, phone, message, wants_updates }) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return;
   const time = new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo', dateStyle: 'medium', timeStyle: 'short' });
   // نص عادي من غير parse_mode، عشان أي رموز يكتبها الزائر ما تبوّظش الرسالة
-  const text = `📩 رسالة جديدة من الموقع\n\n👤 ${name}\n📞 ${phone}\n🕒 ${time}\n\n${message}`;
+  const updates = wants_updates ? '✅ عايز يتابع العروض الجديدة' : '— مش عايز عروض';
+  const text = `📩 رسالة جديدة من الموقع\n\n👤 ${name}\n📞 ${phone}\n🕒 ${time}\n${updates}\n\n${message}`;
   try {
     const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
@@ -43,6 +44,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const phone = String(body.phone ?? '').trim();
   const message = String(body.message ?? '').trim();
   const token = String(body.token ?? '');
+  // الموافقة على العروض لازم تكون true صريحة، أي حاجة غير كده تبقى false
+  const wants_updates = body.wants_updates === true;
 
   if (!name || !phone || !message) return reply(400, 'missing_fields');
   if (name.length > 100 || message.length > 2000) return reply(400, 'too_long');
@@ -68,7 +71,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
       'Content-Type': 'application/json',
       'Prefer': 'return=minimal'
     },
-    body: JSON.stringify({ name, phone, message })
+    body: JSON.stringify({ name, phone, message, wants_updates })
   });
   if (!res.ok) {
     console.error('Supabase insert failed', res.status, await res.text());
@@ -76,7 +79,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   }
 
   // الرد على الزائر ما يستناش تيليجرام
-  waitUntil(notifyTelegram(env, { name, phone, message }));
+  waitUntil(notifyTelegram(env, { name, phone, message, wants_updates }));
 
   return reply(200);
 }
