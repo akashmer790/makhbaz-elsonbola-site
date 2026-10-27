@@ -3,6 +3,9 @@
 //   TURNSTILE_SECRET_KEY  (secret)
 //   SUPABASE_URL          (رابط المشروع، مثلاً https://xxxx.supabase.co)
 //   SUPABASE_SECRET_KEY   (secret، المفتاح اللي بيبدأ بـ sb_secret_)
+// اختياري، لتنبيه تيليجرام مع كل رسالة جديدة:
+//   TELEGRAM_BOT_TOKEN    (secret، من @BotFather)
+//   TELEGRAM_CHAT_ID      (رقم حسابك على تيليجرام)
 
 const PHONE_RE = /^01[0125][0-9]{8}$/;
 
@@ -10,7 +13,25 @@ function reply(status, error) {
   return Response.json(error ? { ok: false, error } : { ok: true }, { status });
 }
 
-export async function onRequestPost({ request, env }) {
+// تنبيه تيليجرام: لو فشل، الرسالة برضه اتحفظت والزائر مش هيشوف خطأ
+async function notifyTelegram(env, { name, phone, message }) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return;
+  const time = new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo', dateStyle: 'medium', timeStyle: 'short' });
+  // نص عادي من غير parse_mode، عشان أي رموز يكتبها الزائر ما تبوّظش الرسالة
+  const text = `📩 رسالة جديدة من الموقع\n\n👤 ${name}\n📞 ${phone}\n🕒 ${time}\n\n${message}`;
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text })
+    });
+    if (!res.ok) console.error('Telegram notify failed', res.status, await res.text());
+  } catch (err) {
+    console.error('Telegram notify error', err);
+  }
+}
+
+export async function onRequestPost({ request, env, waitUntil }) {
   let body;
   try {
     body = await request.json();
@@ -53,6 +74,9 @@ export async function onRequestPost({ request, env }) {
     console.error('Supabase insert failed', res.status, await res.text());
     return reply(502, 'save_failed');
   }
+
+  // الرد على الزائر ما يستناش تيليجرام
+  waitUntil(notifyTelegram(env, { name, phone, message }));
 
   return reply(200);
 }
