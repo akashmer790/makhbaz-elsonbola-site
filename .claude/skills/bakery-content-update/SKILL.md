@@ -8,7 +8,7 @@ description: Update the Al-Sanbola bakery site's business info — prices, produ
 The site has two copies of the same facts, and they drift apart easily:
 
 - **`bakery-facts.md`**: the source of truth. Every fact on the site comes from here. It is listed in `.gitignore` and lives only on this machine, so it is never committed or pushed.
-- **`sanbola.html`**: the public page. Every push to `main` goes live on Cloudflare Pages within a minute or two, so a push is a publish.
+- **`public/sanbola.html`**: the public page. Cloudflare Pages publishes only the `public/` folder, and every push to `main` goes live within a minute or two, so a push is a publish.
 
 The job is to change both the same way, change nothing else, and get the user's go-ahead before anything goes live. Talk to the user in their language (usually Egyptian Arabic) and in plain words.
 
@@ -70,7 +70,7 @@ Ask one direct question, such as «أرفع التعديل على الموقع؟
 
 ## 6. After the user says yes: commit, push, confirm it's live
 
-1. Commit only `sanbola.html`, plus any other tracked file you changed. Never `git add -A` here, and never commit `bakery-facts.md` or the `.cloudflare/` folder. Write a short commit message saying what changed, following the repo's existing commit style.
+1. Commit only `public/sanbola.html`, plus any other tracked file you changed. Never `git add -A` here, and never commit `bakery-facts.md` or the `.cloudflare/` folder. Write a short commit message saying what changed, following the repo's existing commit style.
 2. Push `main`.
 3. Wait for the Cloudflare Pages deployment of that commit, using the `cf` CLI (project `makhbaz-elsonbola-site`). Check that the latest deployment's commit hash is yours and its last stage succeeded.
 4. Fetch `https://makhbaz-elsonbola-site.pages.dev/sanbola` and confirm the new text is there. Use that address: `/sanbola.html` answers with a 308 redirect that some tools don't follow.

@@ -8,7 +8,8 @@ import { join } from 'node:path';
 
 const root = process.argv[2] || process.cwd();
 const factsPath = join(root, 'bakery-facts.md');
-const htmlPath = join(root, 'sanbola.html');
+// الصفحات في public/ (هو بس اللي Cloudflare بينشره)
+const htmlPath = join(root, 'public', 'sanbola.html');
 
 if (!existsSync(factsPath) || !existsSync(htmlPath)) {
   console.log(JSON.stringify({ ok: false, error: 'missing file', factsExists: existsSync(factsPath), htmlExists: existsSync(htmlPath) }, null, 2));
