@@ -3,49 +3,630 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>أهلاً</title>
-  <!-- احتياطي لو الجافاسكريبت مقفول -->
-  <meta http-equiv="refresh" content="4; url=sanbola.html">
+  <title>مخبز السنبلة</title>
+  <meta name="description" content="عيش وحلويات طازة كل يوم، من فرننا لبيتك.">
+  <!-- الحركات بتشتغل بس لما الجافاسكريبت شغال؛ من غيره كل حاجة بتظهر عادي -->
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap">
+  <link rel="stylesheet" href="brand.css">
   <style>
+    * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      min-height: 100vh;
+      background: var(--brand-bg);
+      color: var(--brand-ink);
+      font-family: var(--brand-font);
+      line-height: 1.7;
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 16px 56px;
+    }
+
+    /* الأيقونات المرسومة بالإيد: الرسم نفسه في الـ sprite تحت أول الـ body.
+       الخط والتعبئة بيتورثوا لجوه <use>، فالحركة بتتعمل على الـ svg نفسه. */
+    .icon {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      fill: none;
+      stroke: var(--brand-accent);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 1;
+      stroke-dashoffset: 0;
+      overflow: visible;
+    }
+    .icon-sm { width: 30px; height: 30px; }
+
+    @keyframes draw {
+      0% { stroke-dashoffset: 1; fill-opacity: 0; }
+      60% { fill-opacity: 0; }
+      100% { stroke-dashoffset: 0; fill-opacity: 1; }
+    }
+
+    /* أول الصفحة: اسم المحل بيظهر من اليمين للشمال واللوجو بيترسم */
+    .hero {
+      text-align: center;
+      padding: 56px 0 40px;
+      background: radial-gradient(120% 80% at 50% 0%, var(--brand-soft) 0%, transparent 70%);
+      margin: 0 -16px;
+      padding-inline: 16px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo {
+      width: 46px;
+      height: 74px;
+      stroke-width: 2.4;
+      animation: draw 1.6s ease 0.1s both;
+    }
+    .brand-name {
+      margin: 0;
+      font-size: clamp(2.2rem, 8vw, 3.2rem);
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--brand-accent-dark);
+      animation: name-in 1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.35s both;
+    }
+    @keyframes name-in {
+      from { clip-path: inset(0 0 0 100%); opacity: 0.2; filter: blur(4px); }
+      to { clip-path: inset(0 0 0 0); opacity: 1; filter: none; }
+    }
+    .tagline {
+      margin: 18px 0 10px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      animation: fade-up 0.8s ease 0.9s both;
+    }
+    .about {
+      margin: 0 auto;
+      max-width: 460px;
+      color: var(--brand-muted);
+      animation: fade-up 0.8s ease 1.1s both;
+    }
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* الأقسام: كل عنصر عليه data-reveal بيظهر لما تنزل لحد عنده */
+    html.js [data-reveal] {
+      opacity: 0;
+      transform: translateY(26px);
+      transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+      transition-delay: calc(var(--i, 0) * 80ms);
+    }
+    html.js [data-reveal].in { opacity: 1; transform: none; }
+    html.js [data-reveal] .icon { stroke-dashoffset: 1; fill-opacity: 0; }
+    html.js [data-reveal].in .icon {
+      animation: draw 1.2s ease both;
+      animation-delay: calc(var(--i, 0) * 80ms + 0.25s);
+    }
+
+    section { padding-top: 40px; }
+    .section-title {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-      background: #fdf6ec;
-      color: #333;
+      gap: 10px;
+      margin: 0 0 6px;
+      font-size: 1.55rem;
+      color: var(--brand-accent-dark);
     }
-    h1 {
-      font-size: 3rem;
-      font-weight: 600;
-      /* يختفي بعد ثانيتين */
-      animation: vanish 0.9s ease-in 2s forwards;
-    }
-
-    @keyframes vanish {
-      to {
-        opacity: 0;
-        filter: blur(12px);
-        transform: scale(1.15);
-        letter-spacing: 0.15em;
-      }
+    .squiggle {
+      display: block;
+      width: 120px;
+      height: 10px;
+      margin: 0 0 18px;
+      stroke-width: 2.6;
     }
 
+    /* المنتجات */
+    .products {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .product {
+      position: relative;
+      background: var(--brand-surface);
+      border: 1px solid var(--brand-line);
+      border-radius: 18px;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 6px 14px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.7s ease;
+    }
+    .product .icon { transition: transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1); }
+    .product:hover, .product:focus-within {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px -14px rgba(143, 78, 28, 0.45);
+    }
+    .product:hover .icon { transform: rotate(-8deg) scale(1.08); }
+    .product:active { transform: scale(0.98); }
+    .product .name { font-weight: 700; font-size: 1.1rem; }
+    .product .unit { display: block; font-weight: 400; font-size: 0.9rem; color: var(--brand-muted); }
+    .product .price {
+      white-space: nowrap;
+      font-weight: 700;
+      color: var(--brand-accent-dark);
+      background: var(--brand-soft);
+      border-radius: 999px;
+      padding: 4px 12px;
+    }
+    .product .note {
+      grid-column: 2 / -1;
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--brand-muted);
+    }
+
+    /* المواعيد */
+    .hours {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: var(--brand-surface);
+      border: 1px solid var(--brand-line);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .hours th, .hours td {
+      padding: 14px 16px;
+      text-align: right;
+      border-bottom: 1px solid var(--brand-line);
+    }
+    .hours tr:last-child td { border-bottom: none; }
+    .hours th { background: var(--brand-soft); font-weight: 700; }
+
+    /* العنوان والملاحظات */
+    .info, .notes {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      background: var(--brand-surface);
+      border: 1px solid var(--brand-line);
+      border-radius: 18px;
+    }
+    .info li, .notes li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--brand-line);
+    }
+    .info li:last-child, .notes li:last-child { border-bottom: none; }
+    .info strong { color: var(--brand-accent-dark); }
+    .info a {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dotted var(--brand-accent);
+    }
+    .notes li::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      flex-shrink: 0;
+      border-radius: 50% 0;
+      background: var(--brand-accent);
+      transform: rotate(45deg);
+    }
+
+    /* فورم التواصل */
+    .contact-form {
+      position: relative;
+      background: var(--brand-surface);
+      border: 1px solid var(--brand-line);
+      border-radius: 18px;
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+    .contact-form label { display: grid; gap: 6px; font-weight: 700; }
+    .contact-form input,
+    .contact-form textarea {
+      font: inherit;
+      color: inherit;
+      background: var(--brand-bg);
+      border: 1px solid var(--brand-line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      width: 100%;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .contact-form textarea { min-height: 120px; resize: vertical; }
+    .contact-form .check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 400;
+      cursor: pointer;
+    }
+    .contact-form .check input {
+      width: 20px;
+      height: 20px;
+      margin: 0;
+      accent-color: var(--brand-accent);
+      flex-shrink: 0;
+    }
+    .contact-form input:focus,
+    .contact-form textarea:focus {
+      outline: none;
+      border-color: var(--brand-accent);
+      box-shadow: 0 0 0 3px var(--brand-soft);
+    }
+    /* الخانة المخفية: مخفية من غير ما تتزق برة الصفحة (left: -9999px في صفحة RTL
+       كان بيعرّض الصفحة لـ 10000px ويزق المحتوى برة الشاشة) */
+    .contact-form .trap {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .contact-form button {
+      font: inherit;
+      font-weight: 700;
+      color: #fff;
+      background: var(--brand-accent);
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.15s ease;
+    }
+    .contact-form button:hover { background: var(--brand-accent-dark); }
+    .contact-form button:active { transform: scale(0.97); }
+    .contact-form button:disabled { opacity: 0.6; cursor: wait; }
+    .form-error { margin: 0; color: #a3261b; }
+    .form-done {
+      background: var(--brand-surface);
+      border: 1px solid var(--brand-line);
+      border-radius: 18px;
+      padding: 24px 16px;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--brand-accent-dark);
+      animation: fade-up 0.6s ease both;
+    }
+
+    @media (min-width: 600px) {
+      .products { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* لو الزبون مفعّل "تقليل الحركة" على جهازه: مفيش أي حركة، وكل حاجة ظاهرة على طول */
     @media (prefers-reduced-motion: reduce) {
-      @keyframes vanish {
-        to { opacity: 0; }
-      }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      html.js [data-reveal] { opacity: 1; transform: none; }
+      html.js [data-reveal] .icon { stroke-dashoffset: 0; fill-opacity: 1; }
     }
   </style>
 </head>
 <body>
-  <h1>أهلاً من عبدالرحمن</h1>
+  <!-- الأيقونات المرسومة بالإيد. كل أيقونة: تعبئة بلون هادي + خط بيترسم (pathLength="1" عشان حركة الرسم) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-wheat" viewBox="0 0 40 64">
+      <path pathLength="1" d="M20.5 62 C20 50 21.5 34 19.5 9"/>
+      <g style="fill:var(--brand-soft)">
+        <path pathLength="1" d="M19.5 9.5 C17 6.5 17.6 2.6 20 0.8 C22.3 2.8 22.6 6.4 19.5 9.5Z"/>
+        <path pathLength="1" d="M19.4 19 C13.6 18.4 10.4 13.4 11.2 8 C16.4 8.8 19.6 12.6 19.4 19Z"/>
+        <path pathLength="1" d="M20.2 18.6 C26 17.6 29 12.8 28 7.6 C22.8 8.6 19.9 12.4 20.2 18.6Z"/>
+        <path pathLength="1" d="M19.8 29.4 C13.8 28.8 10.6 23.6 11.4 18.2 C16.8 19 20 23 19.8 29.4Z"/>
+        <path pathLength="1" d="M20.6 29 C26.6 28 29.6 23 28.6 17.8 C23.2 18.8 20.3 22.8 20.6 29Z"/>
+        <path pathLength="1" d="M20 39.6 C14 39 10.9 33.8 11.7 28.6 C17 29.4 20.2 33.2 20 39.6Z"/>
+        <path pathLength="1" d="M20.8 39.2 C26.8 38.2 29.8 33.2 28.8 28 C23.4 29 20.5 33 20.8 39.2Z"/>
+      </g>
+      <path pathLength="1" d="M20.6 50 C25.6 46.2 30.4 46.8 34 42.6"/>
+    </symbol>
+
+    <symbol id="i-fino" viewBox="0 0 48 48">
+      <path pathLength="1" style="fill:var(--brand-soft)" d="M6.5 30.5 C5.6 22.2 14 16.6 24.4 16.8 C34.6 17 42.8 22.4 41.4 30.6 C40.4 35.4 33 36.4 24 36.2 C14.6 36 7.4 35.4 6.5 30.5Z"/>
+      <path pathLength="1" d="M14.6 22.4 L19.2 30.6"/>
+      <path pathLength="1" d="M21.8 21.2 L26.4 30.2"/>
+      <path pathLength="1" d="M29.2 21.8 L33.4 29.4"/>
+    </symbol>
+
+    <symbol id="i-baladi" viewBox="0 0 48 48">
+      <path pathLength="1" style="fill:var(--brand-soft)" d="M7.6 26.4 C7.8 17.2 15.8 12.2 24.2 12.6 C33.4 13 40.6 18.4 40.4 26.6 C40.2 34.6 32 38.4 23.8 38.2 C14.8 38 7.4 34.2 7.6 26.4Z"/>
+      <path pathLength="1" d="M13.8 24.6 C16.2 19.6 21.6 17.6 27.4 18.8"/>
+      <path pathLength="1" d="M19.6 28.6 h0.6"/>
+      <path pathLength="1" d="M26.8 30.8 h0.6"/>
+      <path pathLength="1" d="M31.2 24.2 h0.6"/>
+      <path pathLength="1" d="M22.6 33.6 h0.6"/>
+    </symbol>
+
+    <symbol id="i-croissant" viewBox="0 0 48 48">
+      <path pathLength="1" style="fill:var(--brand-soft)" d="M5.8 30.4 C7.8 20.4 15.6 14 24 14 C32.6 14 40.4 20.2 42.4 30.2 C38.4 28.2 35.2 29.2 33.2 32.4 C30.2 27.4 27.2 26.2 24 26.2 C20.8 26.2 17.8 27.4 14.8 32.2 C12.8 29 9.8 28.4 5.8 30.4Z"/>
+      <path pathLength="1" d="M17.6 16.4 C19.2 20.2 20.2 23.2 20.8 26.4"/>
+      <path pathLength="1" d="M30.4 16.2 C28.8 20 27.8 23.2 27.2 26.4"/>
+    </symbol>
+
+    <symbol id="i-croissant-choc" viewBox="0 0 48 48">
+      <use href="#i-croissant"/>
+      <path pathLength="1" style="stroke:var(--brand-accent-dark)" d="M11.6 23.4 L15.8 19.6 L19.8 23.8 L24.6 18.6 L28.8 23 L33.4 19.4 L37.2 23.2"/>
+    </symbol>
+
+    <symbol id="i-basbousa" viewBox="0 0 48 48">
+      <path pathLength="1" style="fill:var(--brand-soft)" d="M6.6 15.4 L41.2 13.2 L42 35 L6 36.2Z"/>
+      <path pathLength="1" d="M6.4 24.8 L20.8 14.4"/>
+      <path pathLength="1" d="M6.4 35.6 L35.4 13.6"/>
+      <path pathLength="1" d="M21.6 35.6 L41.6 22.4"/>
+      <path pathLength="1" d="M13.6 15 L41.6 33.6"/>
+      <path pathLength="1" d="M6.4 21.6 L28 35.4"/>
+      <path pathLength="1" d="M23.4 24.6 h0.6"/>
+    </symbol>
+
+    <symbol id="i-cake" viewBox="0 0 48 48">
+      <path pathLength="1" style="fill:var(--brand-soft)" d="M8 38.4 L40.2 38 L39.2 26.8 L9 27.2Z"/>
+      <path pathLength="1" style="fill:var(--brand-soft)" d="M14.4 27 L33.8 26.8 L33 19 L15.2 19.2Z"/>
+      <path pathLength="1" d="M9 30.4 C12 32.4 14.2 29 17.2 31 C20.2 33 22.2 29 25.2 31 C28.2 33 31 29 34 31 C36.2 32.4 38 30.4 39.4 30.2"/>
+      <path pathLength="1" d="M24.2 19 L24 12.2"/>
+      <path pathLength="1" style="stroke:var(--brand-accent-dark)" d="M24 10.2 C22.2 8.2 22.8 5.4 24.2 4 C25.8 5.8 26 8.4 24 10.2Z"/>
+    </symbol>
+
+    <symbol id="i-clock" viewBox="0 0 48 48">
+      <path pathLength="1" style="fill:var(--brand-soft)" d="M24.2 7 C34.2 7.2 41.2 14.2 41 24.2 C40.8 34 33.8 41.2 23.8 41 C14 40.8 7 33.8 7.4 23.8 C7.8 14 14.4 6.8 24.2 7Z"/>
+      <path pathLength="1" d="M24 13.6 L24.2 24.2 L31.2 28.4"/>
+    </symbol>
+
+    <symbol id="i-pin" viewBox="0 0 48 48">
+      <path pathLength="1" style="fill:var(--brand-soft)" d="M24 42.4 C17.8 34.2 11.8 27 12 19 C12.2 12 17.6 6.8 24.2 7 C30.8 7.2 36.2 12.4 36 19.2 C35.8 27.2 30 34.2 24 42.4Z"/>
+      <path pathLength="1" d="M24.2 14 C27.2 14 29.2 16.2 29 19.2 C28.8 22.2 26.8 24 24 24 C21 24 19 21.8 19.2 18.8 C19.4 15.8 21.4 14 24.2 14Z"/>
+    </symbol>
+
+    <symbol id="i-phone" viewBox="0 0 48 48">
+      <path pathLength="1" style="fill:var(--brand-soft)" d="M14.8 8.4 C11.8 9.4 10 12.6 10.8 16.4 C13 26.4 21.8 35.2 31.8 37.2 C35.8 38 38.8 36 39.8 33 L34.8 28 C33 26.8 31 27.8 30 29.8 C25 27.8 20 22.8 18.2 18 C20.2 17 21.2 15 20.2 13Z"/>
+      <path pathLength="1" d="M27 9.6 C31.6 10.4 36.2 14.8 37.2 19.6"/>
+    </symbol>
+
+    <symbol id="i-scooter" viewBox="0 0 48 48">
+      <path pathLength="1" d="M12 32 C14.8 32 17 34.2 16.8 37 C16.6 39.8 14.4 41.8 11.8 41.6 C9 41.4 7 39.2 7.2 36.6 C7.4 34 9.4 32 12 32Z"/>
+      <path pathLength="1" d="M36.2 32 C39 32.2 41 34.4 40.8 37.2 C40.6 39.8 38.4 41.8 35.8 41.6 C33 41.4 31.2 39 31.4 36.4 C31.6 33.8 33.6 31.8 36.2 32Z"/>
+      <path pathLength="1" d="M12 37 L18.4 30.2 L30 30.4 L36.2 37"/>
+      <path pathLength="1" d="M18.4 30.2 L16.4 25.4 L22.4 25.2"/>
+      <path pathLength="1" d="M30 30.4 L33.2 17.4 M30.2 17.2 L36.4 16.2"/>
+      <path pathLength="1" style="fill:var(--brand-soft)" d="M4.8 17.8 L15.2 17.6 L15 26.4 L5 26.6Z"/>
+    </symbol>
+
+    <symbol id="i-envelope" viewBox="0 0 48 48">
+      <path pathLength="1" style="fill:var(--brand-soft)" d="M6.8 14.2 L41 13 L41.4 35.2 L7 35.6Z"/>
+      <path pathLength="1" d="M7 14.4 L24.2 27.4 L41 13.2"/>
+    </symbol>
+
+    <symbol id="i-squiggle" viewBox="0 0 120 10">
+      <path pathLength="1" d="M2 6 C12 2 20 9 30 5 C40 1 48 9 58 5 C68 1 76 9 86 5 C96 1 104 8 118 4"/>
+    </symbol>
+  </svg>
+
+  <div class="wrap">
+
+    <header class="hero">
+      <div class="brand">
+        <svg class="icon logo" aria-hidden="true"><use href="#i-wheat"/></svg>
+        <h1 class="brand-name">مخبز السنبلة</h1>
+      </div>
+      <p class="tagline">عيش وحلويات طازة كل يوم، من فرننا لبيتك.</p>
+      <p class="about">مخبز عيلة صغير. بنخبز كل يوم الصبح بدري، ومفيش حاجة عندنا بايتة.</p>
+    </header>
+
+    <section id="products">
+      <div data-reveal>
+        <h2 class="section-title">المنتجات والأسعار</h2>
+        <svg class="icon squiggle" aria-hidden="true"><use href="#i-squiggle"/></svg>
+      </div>
+      <ul class="products">
+        <li class="product" data-reveal style="--i:0">
+          <svg class="icon" aria-hidden="true"><use href="#i-fino"/></svg>
+          <span class="name">عيش فينو<span class="unit">5 أرغفة</span></span>
+          <span class="price">15 جنيه</span>
+        </li>
+        <li class="product" data-reveal style="--i:1">
+          <svg class="icon" aria-hidden="true"><use href="#i-baladi"/></svg>
+          <span class="name">عيش بلدي مخصوص<span class="unit">5 أرغفة</span></span>
+          <span class="price">10 جنيه</span>
+        </li>
+        <li class="product" data-reveal style="--i:2">
+          <svg class="icon" aria-hidden="true"><use href="#i-croissant"/></svg>
+          <span class="name">كرواسون سادة<span class="unit">القطعة</span></span>
+          <span class="price">20 جنيه</span>
+        </li>
+        <li class="product" data-reveal style="--i:3">
+          <svg class="icon" aria-hidden="true"><use href="#i-croissant-choc"/></svg>
+          <span class="name">كرواسون شوكولاتة<span class="unit">القطعة</span></span>
+          <span class="price">28 جنيه</span>
+        </li>
+        <li class="product" data-reveal style="--i:4">
+          <svg class="icon" aria-hidden="true"><use href="#i-basbousa"/></svg>
+          <span class="name">بسبوسة<span class="unit">الكيلو</span></span>
+          <span class="price">160 جنيه</span>
+        </li>
+        <li class="product" data-reveal style="--i:5">
+          <svg class="icon" aria-hidden="true"><use href="#i-cake"/></svg>
+          <span class="name">تورتة عيد ميلاد<span class="unit">حسب الطلب</span></span>
+          <span class="price">من 450 جنيه</span>
+          <p class="note">بالحجز قبلها بيومين</p>
+        </li>
+      </ul>
+    </section>
+
+    <section id="hours">
+      <div data-reveal>
+        <h2 class="section-title"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-clock"/></svg>المواعيد</h2>
+        <svg class="icon squiggle" aria-hidden="true"><use href="#i-squiggle"/></svg>
+      </div>
+      <table class="hours" data-reveal>
+        <thead>
+          <tr><th>اليوم</th><th>من</th><th>لحد</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>السبت للخميس</td><td>7 الصبح</td><td>11 بالليل</td></tr>
+          <tr><td>الجمعة</td><td>2 الضهر</td><td>11 بالليل</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="contact">
+      <div data-reveal>
+        <h2 class="section-title">العنوان والتواصل</h2>
+        <svg class="icon squiggle" aria-hidden="true"><use href="#i-squiggle"/></svg>
+      </div>
+      <ul class="info" data-reveal>
+        <li><svg class="icon icon-sm" aria-hidden="true"><use href="#i-pin"/></svg><span><strong>العنوان:</strong> 12 شارع النخيل، جنب الصيدلية</span></li>
+        <li><svg class="icon icon-sm" aria-hidden="true"><use href="#i-phone"/></svg><span><strong>الموبايل:</strong> <a href="tel:+201000000000" dir="ltr">0100 000 0000</a></span></li>
+        <li><svg class="icon icon-sm" aria-hidden="true"><use href="#i-scooter"/></svg><span><strong>التوصيل:</strong> بنوصّل في حدود 3 كيلو، والطلب الأقل 100 جنيه</span></li>
+      </ul>
+    </section>
+
+    <section id="message">
+      <div data-reveal>
+        <h2 class="section-title"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-envelope"/></svg>ابعتلنا رسالة</h2>
+        <svg class="icon squiggle" aria-hidden="true"><use href="#i-squiggle"/></svg>
+      </div>
+      <form class="contact-form" id="contact-form" novalidate data-reveal>
+        <label>الاسم
+          <input type="text" name="name" required maxlength="100" autocomplete="name">
+        </label>
+        <label>الموبايل
+          <input type="tel" name="phone" required inputmode="tel" autocomplete="tel" dir="ltr" placeholder="01xxxxxxxxx">
+        </label>
+        <label>الرسالة
+          <textarea name="message" required maxlength="2000"></textarea>
+        </label>
+        <!-- اختياري ومش متعلّم من الأول: الزبون هو اللي يختار يتابع معانا -->
+        <label class="check">
+          <input type="checkbox" name="wants_updates">
+          ابعتولي عروضكم ومنتجاتكم الجديدة على رقمي
+        </label>
+        <!-- خانة مخفية لصيد البوتات -->
+        <input class="trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <!-- تحقق Cloudflare Turnstile إن اللي بيبعت إنسان -->
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAFm2mFH3_zmq5k6W" data-language="ar"></div>
+        <p class="form-error" id="form-error" role="alert" hidden></p>
+        <button type="submit">ابعت</button>
+      </form>
+      <p class="form-done" id="form-done" role="status" hidden>وصلتنا رسالتك، هنكلّمك في نفس اليوم.</p>
+    </section>
+
+    <section id="notes">
+      <div data-reveal>
+        <h2 class="section-title">ملاحظات</h2>
+        <svg class="icon squiggle" aria-hidden="true"><use href="#i-squiggle"/></svg>
+      </div>
+      <ul class="notes" data-reveal>
+        <li>مفيش أكل من غير جلوتين.</li>
+        <li>مفيش دفع أونلاين: الدفع كاش أو إنستاباي عند الاستلام.</li>
+        <li>مفيش منيو إنجليزي.</li>
+      </ul>
+    </section>
+
+    <!-- بيانات خيالية للتدريب — المخبز ده مش موجود، والأرقام والأسعار والعنوان متألّفين. -->
+
+  </div>
+
   <script>
-    // بعد ما التأثير يخلص نروح لصفحة المخبز
-    document.querySelector('h1').addEventListener('animationend', function () {
-      location.replace('sanbola.html');
+    // ظهور العناصر وانت بتنزل: كل عنصر بياخد class "in" أول ما يبان، ومرة واحدة بس
+    (function () {
+      const items = document.querySelectorAll('[data-reveal]');
+      if (!('IntersectionObserver' in window)) {
+        items.forEach(el => el.classList.add('in'));
+        return;
+      }
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        });
+      }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+      items.forEach(el => io.observe(el));
+    })();
+  </script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script>
+    // الفورم بيبعت لـ /api/message (functions/api/message.js)، وهو اللي بيتأكد من Turnstile ويحفظ في Supabase
+    const form = document.getElementById('contact-form');
+    const errorBox = document.getElementById('form-error');
+    const done = document.getElementById('form-done');
+
+    // نحوّل الأرقام العربي لإنجليزي ونشيل المسافات والشرط
+    function normalizePhone(value) {
+      return value
+        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+        .replace(/[\s\-]/g, '')
+        .replace(/^\+?20(?=1)/, '0');
+    }
+
+    function showError(text) {
+      errorBox.textContent = text;
+      errorBox.hidden = false;
+    }
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      errorBox.hidden = true;
+
+      // form.elements لأن form.name بترجع اسم الفورم نفسه مش الخانة
+      const fields = form.elements;
+      const name = fields.name.value.trim();
+      const phone = normalizePhone(fields.phone.value);
+      const message = fields.message.value.trim();
+      const wants_updates = fields.wants_updates.checked;
+
+      if (!name || !phone || !message) {
+        showError('من فضلك املا كل الخانات.');
+        return;
+      }
+      if (!/^01[0125][0-9]{8}$/.test(phone)) {
+        showError('رقم الموبايل لازم يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015.');
+        return;
+      }
+      // بوت ملا الخانة المخفية: نتظاهر إن الإرسال نجح
+      if (fields.website.value) {
+        form.hidden = true;
+        done.hidden = false;
+        return;
+      }
+
+      const token = fields['cf-turnstile-response'] ? fields['cf-turnstile-response'].value : '';
+      if (!token) {
+        showError('استنى ثانية لحد ما التحقق يخلص، وبعدين دوس ابعت.');
+        return;
+      }
+
+      const button = form.querySelector('button');
+      button.disabled = true;
+      try {
+        const res = await fetch('/api/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, message, wants_updates, token })
+        });
+        if (!res.ok) throw new Error(res.status);
+        form.hidden = true;
+        done.hidden = false;
+      } catch (err) {
+        showError('حصلت مشكلة في الإرسال، جرّب تاني أو كلّمنا على الموبايل.');
+        button.disabled = false;
+        // كل توكن Turnstile بيتستعمل مرة واحدة بس
+        if (window.turnstile) turnstile.reset();
+      }
     });
   </script>
 </body>

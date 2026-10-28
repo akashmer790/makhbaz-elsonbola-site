@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Compares the bakery facts in bakery-facts.md with what sanbola.html shows.
+// Compares the bakery facts in bakery-facts.md with what public/index.html shows.
 // Usage: node check-consistency.mjs [project-root]
 // Prints a JSON report and exits 1 if anything differs, 0 if everything matches.
 
@@ -9,7 +9,7 @@ import { join } from 'node:path';
 const root = process.argv[2] || process.cwd();
 const factsPath = join(root, 'bakery-facts.md');
 // الصفحات في public/ (هو بس اللي Cloudflare بينشره)
-const htmlPath = join(root, 'public', 'sanbola.html');
+const htmlPath = join(root, 'public', 'index.html');
 
 if (!existsSync(factsPath) || !existsSync(htmlPath)) {
   console.log(JSON.stringify({ ok: false, error: 'missing file', factsExists: existsSync(factsPath), htmlExists: existsSync(htmlPath) }, null, 2));
@@ -46,7 +46,7 @@ function labeled(list, label) {
 
 // --- html helpers ---
 function htmlSection(id) {
-  const m = html.match(new RegExp(`<section id="${id}">([\\s\\S]*?)</section>`));
+  const m = html.match(new RegExp(`<section id="${id}"[^>]*>([\\s\\S]*?)</section>`));
   return m ? m[1] : '';
 }
 
@@ -57,8 +57,9 @@ const check = (what, factsValue, pageValue) => {
 
 // Products
 const factProducts = tableRows(section(facts, 'المنتجات والأسعار')).map(([name, unit, price]) => ({ name, unit, price }));
-const pageProducts = [...htmlSection('products').matchAll(/<li class="product">([\s\S]*?)<\/li>/g)].map(m => {
+const pageProducts = [...htmlSection('products').matchAll(/<li class="product"[^>]*>([\s\S]*?)<\/li>/g)].map(m => {
   const li = m[1];
+  // the product icon (<svg>) sits before the name and has no text, so it doesn't affect any of these
   const unit = clean(li.match(/<span class="unit">([\s\S]*?)<\/span>/)?.[1] ?? '');
   const nameRaw = li.match(/<span class="name">([\s\S]*?)<span class="unit">/)?.[1] ?? '';
   const price = clean(li.match(/<span class="price">([\s\S]*?)<\/span>/)?.[1] ?? '');
@@ -110,7 +111,7 @@ const tagline = facts.match(/جملة التعريف: «([^»]+)»/)?.[1] ?? nul
 check('tagline', tagline, clean(html.match(/<p class="tagline">([\s\S]*?)<\/p>/)?.[1] ?? ''));
 check('meta description', tagline, html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? null);
 // the page already shows the name in the <h1>, so its about line starts after "مخبز السنبلة، "
-const businessName = clean(html.match(/<h1>([\s\S]*?)<\/h1>/)?.[1] ?? '');
+const businessName = clean(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? '');
 const aboutLine = section(facts, 'مين إحنا').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('جملة التعريف'))[0] ?? null;
 const about = aboutLine && businessName ? aboutLine.replace(new RegExp(`^${businessName}،\\s*`), '') : aboutLine;
 check('about', about, clean(html.match(/<p class="about">([\s\S]*?)<\/p>/)?.[1] ?? ''));

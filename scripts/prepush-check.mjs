@@ -3,7 +3,7 @@
 // فالفحص ده بيوقف الـ push لو:
 //   1. السيرفر بيحفظ عمود مش موجود في supabase/messages.sql أو مش موجود في جدول Supabase نفسه
 //      (لو اترفع كده، كل رسالة من الفورم هتفشل)
-//   2. bakery-facts.md و sanbola.html مش متطابقين
+//   2. bakery-facts.md و public/index.html مش متطابقين
 // تشغيل يدوي: node scripts/prepush-check.mjs
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -64,9 +64,9 @@ if (!existsSync(join(root, 'bakery-facts.md'))) {
 } else if (existsSync(checker)) {
   try {
     execFileSync(process.execPath, [checker, root], { stdio: 'pipe' });
-    ok('bakery-facts.md و sanbola.html متطابقين');
+    ok('bakery-facts.md و public/index.html متطابقين');
   } catch (e) {
-    fail(`bakery-facts.md و sanbola.html مختلفين:\n${String(e.stdout)}`);
+    fail(`bakery-facts.md و public/index.html مختلفين:\n${String(e.stdout)}`);
   }
 }
 
