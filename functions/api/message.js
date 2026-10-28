@@ -9,6 +9,15 @@
 
 const PHONE_RE = /^01[0125][0-9]{8}$/;
 
+// نفس اللي الصفحة بتعمله: أرقام عربي أو فارسي → إنجليزي، من غير مسافات أو شرط، و+20 أو 0020 → 0
+function normalizePhone(value) {
+  return value
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+    .replace(/[\s\-]/g, '')
+    .replace(/^(?:\+|00)?20(?=1)/, '0');
+}
+
 function reply(status, error) {
   return Response.json(error ? { ok: false, error } : { ok: true }, { status });
 }
@@ -63,9 +72,14 @@ export async function onRequestPost({ request, env, waitUntil }) {
   } catch {
     return reply(400, 'bad_request');
   }
+  // JSON سليم بس مش object (زي null أو رقم) كان بيوقّع الـ function
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return reply(400, 'bad_request');
+
+  // بوت ملا الخانة المخفية: نتظاهر إن الإرسال نجح ومنحفظش حاجة
+  if (body.website) return reply(200);
 
   const name = String(body.name ?? '').trim();
-  const phone = String(body.phone ?? '').trim();
+  const phone = normalizePhone(String(body.phone ?? ''));
   const message = String(body.message ?? '').trim();
   const token = String(body.token ?? '');
   // الموافقة على العروض لازم تكون true صريحة، أي حاجة غير كده تبقى false
@@ -77,15 +91,22 @@ export async function onRequestPost({ request, env, waitUntil }) {
   if (!token) return reply(400, 'turnstile_missing');
 
   // التأكد إن اللي باعت إنسان
-  const verify = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    body: new URLSearchParams({
-      secret: env.TURNSTILE_SECRET_KEY,
-      response: token,
-      remoteip: request.headers.get('CF-Connecting-IP') ?? ''
-    })
-  }).then(r => r.json());
-  if (!verify.success) return reply(403, 'turnstile_failed');
+  let verify;
+  try {
+    verify = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: new URLSearchParams({
+        secret: env.TURNSTILE_SECRET_KEY,
+        response: token,
+        remoteip: request.headers.get('CF-Connecting-IP') ?? ''
+      })
+    }).then(r => r.json());
+  } catch (err) {
+    // لو Cloudflare ما ردّتش، نرجّع خطأ واضح بدل ما الـ function توقع
+    console.error('Turnstile verify error', err);
+    return reply(502, 'turnstile_unavailable');
+  }
+  if (!verify?.success) return reply(403, 'turnstile_failed');
 
   const row = { name, phone, message, wants_updates };
   if (!(await saveMessage(env, row))) {

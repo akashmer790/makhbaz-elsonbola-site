@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>مخبز السنبلة</title>
   <meta name="description" content="عيش وحلويات طازة كل يوم، من فرننا لبيتك.">
+  <!-- شكل اللينك لما يتبعت على واتساب أو فيسبوك. og:description لازم تفضل زي جملة التعريف -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ar_EG">
+  <meta property="og:title" content="مخبز السنبلة">
+  <meta property="og:description" content="عيش وحلويات طازة كل يوم، من فرننا لبيتك.">
+  <meta property="og:url" content="https://makhbaz-elsonbola-site.pages.dev/">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#fbf5ea">
   <!-- الحركات بتشتغل بس لما الجافاسكريبت شغال؛ من غيره كل حاجة بتظهر عادي -->
   <script>document.documentElement.classList.add('js');</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -149,15 +157,22 @@
       grid-template-columns: auto 1fr auto;
       align-items: center;
       gap: 6px 14px;
-      transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.7s ease;
+      transition: translate 0.25s ease, scale 0.15s ease, box-shadow 0.25s ease;
+    }
+    /* حركة الـ hover بـ translate و scale مش transform، لأن transform بتاعة الظهور (data-reveal)
+       أقوى منها وكانت بتلغيها، والـ transition بتاعها كان بيأخّر الـ hover لحد 0.4 ثانية */
+    html.js .product[data-reveal] {
+      transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+                  translate 0.25s ease, scale 0.15s ease, box-shadow 0.25s ease;
+      transition-delay: calc(var(--i, 0) * 80ms), calc(var(--i, 0) * 80ms), 0s, 0s, 0s;
     }
     .product .icon { transition: transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1); }
     .product:hover, .product:focus-within {
-      transform: translateY(-4px);
+      translate: 0 -4px;
       box-shadow: 0 12px 24px -14px rgba(143, 78, 28, 0.45);
     }
     .product:hover .icon { transform: rotate(-8deg) scale(1.08); }
-    .product:active { transform: scale(0.98); }
+    .product:active { scale: 0.98; }
     .product .name { font-weight: 700; font-size: 1.1rem; }
     .product .unit { display: block; font-weight: 400; font-size: 0.9rem; color: var(--brand-muted); }
     .product .price {
@@ -242,7 +257,7 @@
       font: inherit;
       color: inherit;
       background: var(--brand-bg);
-      border: 1px solid var(--brand-line);
+      border: 1px solid var(--brand-field);
       border-radius: 10px;
       padding: 10px 12px;
       width: 100%;
@@ -284,14 +299,15 @@
       font: inherit;
       font-weight: 700;
       color: #fff;
-      background: var(--brand-accent);
+      /* accent-dark مش accent: الأبيض على accent تباينه 4.1 بس، أقل من 4.5 المطلوبة للقراية */
+      background: var(--brand-accent-dark);
       border: none;
       border-radius: 10px;
       padding: 12px;
       cursor: pointer;
-      transition: background 0.2s ease, transform 0.15s ease;
+      transition: filter 0.2s ease, transform 0.15s ease;
     }
-    .contact-form button:hover { background: var(--brand-accent-dark); }
+    .contact-form button:hover { filter: brightness(0.88); }
     .contact-form button:active { transform: scale(0.97); }
     .contact-form button:disabled { opacity: 0.6; cursor: wait; }
     .form-error { margin: 0; color: #a3261b; }
@@ -415,7 +431,7 @@
     </symbol>
   </svg>
 
-  <div class="wrap">
+  <main class="wrap">
 
     <header class="hero">
       <div class="brand">
@@ -517,7 +533,7 @@
         <!-- خانة مخفية لصيد البوتات -->
         <input class="trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
         <!-- تحقق Cloudflare Turnstile إن اللي بيبعت إنسان -->
-        <div class="cf-turnstile" data-sitekey="0x4AAAAAAFm2mFH3_zmq5k6W" data-language="ar"></div>
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAFm2mFH3_zmq5k6W" data-language="ar" data-theme="light"></div>
         <p class="form-error" id="form-error" role="alert" hidden></p>
         <button type="submit">ابعت</button>
       </form>
@@ -538,7 +554,7 @@
 
     <!-- بيانات خيالية للتدريب — المخبز ده مش موجود، والأرقام والأسعار والعنوان متألّفين. -->
 
-  </div>
+  </main>
 
   <script>
     // ظهور العناصر وانت بتنزل: كل عنصر بياخد class "in" أول ما يبان، ومرة واحدة بس
@@ -565,12 +581,14 @@
     const errorBox = document.getElementById('form-error');
     const done = document.getElementById('form-done');
 
-    // نحوّل الأرقام العربي لإنجليزي ونشيل المسافات والشرط
+    // نحوّل الأرقام العربي والفارسي لإنجليزي ونشيل المسافات والشرط، و+20 أو 0020 تبقى 0
+    // (السيرفر بيعمل نفس الحاجة في functions/api/message.js)
     function normalizePhone(value) {
       return value
         .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+        .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
         .replace(/[\s\-]/g, '')
-        .replace(/^\+?20(?=1)/, '0');
+        .replace(/^(?:\+|00)?20(?=1)/, '0');
     }
 
     function showError(text) {
@@ -618,11 +636,20 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, phone, message, wants_updates, token })
         });
-        if (!res.ok) throw new Error(res.status);
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || String(res.status));
+        }
         form.hidden = true;
         done.hidden = false;
       } catch (err) {
-        showError('حصلت مشكلة في الإرسال، جرّب تاني أو كلّمنا على الموبايل.');
+        // رسالة واضحة للأخطاء اللي الزبون يقدر يصلّحها، وغير كده الرسالة العامة
+        const messages = {
+          turnstile_failed: 'التحقق خلص وقته. استنى ثانية لحد ما يخلص تاني، وبعدين دوس ابعت.',
+          bad_phone: 'رقم الموبايل لازم يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015.',
+          too_long: 'الرسالة طويلة شوية، خليها أقصر من 2000 حرف.'
+        };
+        showError(messages[err.message] || 'حصلت مشكلة في الإرسال، جرّب تاني أو كلّمنا على الموبايل.');
         button.disabled = false;
         // كل توكن Turnstile بيتستعمل مرة واحدة بس
         if (window.turnstile) turnstile.reset();

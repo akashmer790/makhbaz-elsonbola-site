@@ -110,6 +110,7 @@ check('notes', factNotes.join(' / '), pageNotes.join(' / '));
 const tagline = facts.match(/جملة التعريف: «([^»]+)»/)?.[1] ?? null;
 check('tagline', tagline, clean(html.match(/<p class="tagline">([\s\S]*?)<\/p>/)?.[1] ?? ''));
 check('meta description', tagline, html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? null);
+check('og:description (link preview)', tagline, html.match(/<meta property="og:description" content="([^"]*)"/)?.[1] ?? null);
 // the page already shows the name in the <h1>, so its about line starts after "مخبز السنبلة، "
 const businessName = clean(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? '');
 const aboutLine = section(facts, 'مين إحنا').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('جملة التعريف'))[0] ?? null;

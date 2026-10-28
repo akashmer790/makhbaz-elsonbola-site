@@ -37,15 +37,18 @@ if (!rowMatch) {
   if (!ref) {
     console.warn('! مش لاقي project_ref في .mcp.json، هتخطّى فحص الجدول نفسه');
   } else {
-    // "permission denied" (42501) معناها إن العمود موجود والمفتاح العام ممنوع، وده المطلوب.
+    // الرد الوحيد المقبول هو "permission denied" (42501): العمود موجود والمفتاح العام ممنوع.
     // "undefined column" (42703) معناها إن العمود مش موجود.
+    // أي رد تاني (الجدول مش موجود PGRST205، مفتاح غلط 401، الجدول مفتوح للزوار 200...) يوقّف الـ push.
     const missingInDb = [];
+    const unexpected = [];
     let offline = false;
     for (const c of columns) {
       try {
         const res = await fetch(`https://${ref}.supabase.co/rest/v1/messages?select=${c}&limit=0`, { headers: { apikey: PUBLISHABLE_KEY } });
-        const body = res.ok ? null : await res.json().catch(() => ({}));
+        const body = await res.json().catch(() => ({}));
         if (body?.code === '42703') missingInDb.push(c);
+        else if (body?.code !== '42501') unexpected.push(`${c}: HTTP ${res.status} ${body?.code ?? ''} ${body?.message ?? ''}`.trim());
       } catch {
         offline = true;
         break;
@@ -53,7 +56,8 @@ if (!rowMatch) {
     }
     if (offline) console.warn('! مفيش اتصال بـ Supabase، هتخطّى فحص الجدول نفسه');
     else if (missingInDb.length) fail(`الأعمدة دي مش موجودة في جدول Supabase: ${missingInDb.join(', ')}\n  شغّل supabase/messages.sql في SQL Editor الأول، وبعدين اعمل push تاني.`);
-    else ok('جدول messages في Supabase فيه كل الأعمدة');
+    else if (unexpected.length) fail(`جدول messages في Supabase ردّ رد مش متوقع (لازم يكون permission denied 42501):\n  ${unexpected.join('\n  ')}\n  اتأكد إن الجدول موجود، وإن المفتاح الـ publishable صح، وإن RLS شغال.`);
+    else ok('جدول messages في Supabase فيه كل الأعمدة، ومقفول على الزوار');
   }
 }
 

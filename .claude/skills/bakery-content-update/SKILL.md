@@ -40,7 +40,7 @@ Copy the patterns already in the files rather than inventing new ones:
 | Hours | a row in the `## المواعيد` table | a `<tr>` in the `#hours` table |
 | Address / phone / delivery | bullets under `## العنوان والتواصل` | the `<li>` items in `#contact` |
 | What we don't have | bullets under `## اللي مش عندنا` | `<li>` items in `#notes` |
-| Tagline | `جملة التعريف: «...»` | `<p class="tagline">` **and** `<meta name="description">` |
+| Tagline | `جملة التعريف: «...»` | `<p class="tagline">` **and** `<meta name="description">` **and** `<meta property="og:description">` |
 
 Details that matter:
 
@@ -59,7 +59,7 @@ Run the bundled checker from the project root:
 node .claude/skills/bakery-content-update/scripts/check-consistency.mjs .
 ```
 
-It compares products, units, prices, hours, address, phone and the `tel:` link, delivery, notes, tagline, meta description and about text, and lists every difference. Fix anything it reports until it prints `"ok": true`. If it reports a difference you didn't cause, leave it alone and tell the user.
+It compares products, units, prices, hours, address, phone and the `tel:` link, delivery, notes, tagline, meta description, og:description and about text, and lists every difference. Fix anything it reports until it prints `"ok": true`. If it reports a difference you didn't cause, leave it alone and tell the user.
 
 ## 5. Show the change and ask before publishing
 

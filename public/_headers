@@ -1,0 +1,10 @@
+# هيدرز أمان لكل صفحات الموقع (Cloudflare Pages بيقرا الملف ده؛ ما بيطبّقهوش على functions/).
+# الـ CSP بتسمح بس بالمصادر اللي الصفحة بتستعملها فعلاً:
+#   Turnstile من challenges.cloudflare.com، والخط من Google Fonts، والفورم بيبعت لـ /api/message.
+# 'unsafe-inline' عشان السكريبتات والستايل اللي جوه index.html. لو ضفت سكريبت أو خط من مكان جديد، ضيفه هنا،
+# وإلا المتصفح هيمنعه.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://challenges.cloudflare.com; connect-src 'self'; img-src 'self' data:; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000
