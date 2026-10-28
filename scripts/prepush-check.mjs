@@ -4,6 +4,7 @@
 //   1. السيرفر بيحفظ أو بيقرا عمود مش موجود في supabase/messages.sql أو مش موجود في جدول Supabase نفسه
 //      (لو اترفع كده، كل رسالة من الفورم أو صفحة الأدمن هتفشل)
 //   2. بناء الموقع من business.json فشل
+//   3. أي test فشل (node --test)
 // وبيحذّر (من غير ما يوقف) لو bakery-facts.md بقى قديم عن الصفحة المبنية (dist/index.html)
 // تشغيل يدوي: node scripts/prepush-check.mjs
 
@@ -61,7 +62,15 @@ if (!rowMatch || !fieldsMatch) {
       }
     }
     if (offline) console.warn('! مفيش اتصال بـ Supabase، هتخطّى فحص الجدول نفسه');
-    else if (missingInDb.length) fail(`الأعمدة دي مش موجودة في جدول Supabase: ${missingInDb.join(', ')}\n  شغّل supabase/messages.sql في SQL Editor الأول، وبعدين اعمل push تاني.`);
+    else if (missingInDb.length) {
+      // بنطبع جمل الـ SQL نفسها من الملف اللي على الجهاز، عشان ما تتشغّلش نسخة قديمة منه من GitHub أو من تاب قديم
+      const statements = sql.split(';')
+        .filter(s => missingInDb.some(c => new RegExp(`add column if not exists ${c}\\b`).test(s)))
+        .map(s => s.split('\n').filter(line => line.trim() && !line.trim().startsWith('--')).join('\n') + ';');
+      fail(`الأعمدة دي مش موجودة في جدول Supabase: ${missingInDb.join(', ')}\n`
+        + `  الصق ده في SQL Editor على مشروع ${ref} وشغّله (آمن لو اتشغّل أكتر من مرة)، وبعدين اعمل push تاني:\n\n`
+        + statements.join('\n\n') + '\n');
+    }
     else if (unexpected.length) fail(`جدول messages في Supabase ردّ رد مش متوقع (لازم يكون permission denied 42501):\n  ${unexpected.join('\n  ')}\n  اتأكد إن الجدول موجود، وإن المفتاح الـ publishable صح، وإن RLS شغال.`);
     else ok('جدول messages في Supabase فيه كل الأعمدة، ومقفول على الزوار');
   }
@@ -77,7 +86,16 @@ try {
   fail(`بناء الموقع فشل (node scripts/build.mjs):\n${String(e.stderr || e.stdout)}`);
 }
 
-// 3) ورقة المعلومات والصفحة المبنية متطابقين (الملف ده على الجهاز بس، فلو مش موجود نتخطّى).
+// 3) كل الـ tests، ومعاهم تشغيل سكريبتات الصفحات (test/pages.test.mjs)
+try {
+  execFileSync(process.execPath, ['--test'], { cwd: root, stdio: 'pipe' });
+  ok('كل الـ tests نجحت (node --test)');
+} catch (e) {
+  const failures = String(e.stdout).split('\n').filter(line => line.startsWith('✖')).join('\n');
+  fail(`فيه tests فشلت (شغّل node --test عشان تشوف التفاصيل):\n${failures}`);
+}
+
+// 4) ورقة المعلومات والصفحة المبنية متطابقين (الملف ده على الجهاز بس، فلو مش موجود نتخطّى).
 // تحذير بس مش وقف: الصفحة بتتبني من business.json، وصفحة الأدمن بتعدّل الأسعار فيه على GitHub مباشرة،
 // فالاختلاف معناه إن ورقة المعلومات على الجهاز هي اللي قديمة، مش إن الموقع غلط
 const checker = join(root, '.claude/skills/bakery-content-update/scripts/check-consistency.mjs');

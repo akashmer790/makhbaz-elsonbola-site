@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "site",
+      "runtimeExecutable": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "runtimeArgs": ["-m", "http.server", "8788", "--bind", "127.0.0.1", "--directory", "dist"],
+      "port": 8788
+    },
+    {
+      "name": "accounts-dev",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["scripts/dev-server.mjs", "8790"],
+      "port": 8790
+    }
+  ]
+}
