@@ -1,0 +1,133 @@
+/* صفحات الدخول والحساب والأدمن. الألوان والخط من brand.css، فبتاخد شكل أي محل لوحدها.
+   مفيش style جوه الصفحات نفسها، لأن الـ CSP بتاعتها مقفولة على الملفات دي بس (template/static/_headers). */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--brand-bg);
+  color: var(--brand-ink);
+  font-family: var(--brand-font);
+  line-height: 1.7;
+}
+
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px 56px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.top a { color: var(--brand-accent-dark); font-weight: 700; text-decoration: none; }
+
+h1 { margin: 0 0 4px; font-size: 1.8rem; color: var(--brand-accent-dark); }
+h2 { margin: 28px 0 12px; font-size: 1.3rem; color: var(--brand-accent-dark); }
+.muted { color: var(--brand-muted); margin: 0; }
+[hidden] { display: none !important; }
+
+.card {
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-line);
+  border-radius: 18px;
+  padding: 16px;
+}
+.list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.card .meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  font-size: 0.9rem;
+  color: var(--brand-muted);
+}
+.card .text { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: var(--brand-soft);
+  color: var(--brand-accent-dark);
+}
+.badge.done { background: #e3f1e1; color: #2c6127; }
+
+.reply {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-inline-start: 4px solid var(--brand-accent);
+  background: var(--brand-bg);
+  border-radius: 10px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.reply strong { display: block; color: var(--brand-accent-dark); }
+
+.btn, button {
+  display: inline-block;
+  font: inherit;
+  font-weight: 700;
+  color: #fff;
+  /* accent-dark مش accent: الأبيض على accent تباينه 4.1 بس، أقل من 4.5 المطلوبة للقراية */
+  background: var(--brand-accent-dark);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  text-decoration: none;
+  cursor: pointer;
+}
+button.quiet {
+  color: var(--brand-accent-dark);
+  background: transparent;
+  border: 1px solid var(--brand-field);
+}
+button:disabled { opacity: 0.6; cursor: wait; }
+.btn:hover, button:hover { filter: brightness(0.92); }
+
+input, textarea, select {
+  font: inherit;
+  color: inherit;
+  background: var(--brand-bg);
+  border: 1px solid var(--brand-field);
+  border-radius: 10px;
+  padding: 8px 10px;
+  width: 100%;
+}
+textarea { min-height: 80px; resize: vertical; }
+input:focus, textarea:focus, select:focus, button:focus-visible, .btn:focus-visible {
+  outline: 3px solid var(--brand-soft);
+  outline-offset: 1px;
+  border-color: var(--brand-accent);
+}
+label { display: grid; gap: 4px; font-weight: 700; font-size: 0.9rem; }
+
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.notice { margin: 12px 0; padding: 10px 12px; border-radius: 10px; background: var(--brand-soft); }
+.notice.error { background: #fbe3e0; color: #a3261b; }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tabs button[aria-selected="false"] {
+  color: var(--brand-accent-dark);
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-line);
+}
+
+.product-edit { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+.product-edit .wide { grid-column: 1 / -1; }
+
+table { width: 100%; border-collapse: collapse; background: var(--brand-surface); border-radius: 18px; overflow: hidden; }
+th, td { padding: 10px 12px; text-align: right; border-bottom: 1px solid var(--brand-line); }
+th { background: var(--brand-soft); }
+td[dir="ltr"] { text-align: left; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

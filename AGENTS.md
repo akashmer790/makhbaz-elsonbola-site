@@ -2,6 +2,7 @@
 - كل push على main بيتنشر على Cloudflare Pages لوحده. فحص `scripts/prepush-check.mjs` بيشتغل قبل كل push؛ بعد أي clone فعّله بـ `git config core.hooksPath .githooks`.
 - أي متغير جديد في إعدادات Cloudflare Pages ما بيشتغلش غير بعد نشر جديد.
 - الفورم بيحفظ في جدول messages على Supabase.
+- دخول الزباين (جوجل عن طريق Supabase Auth) وصفحة الأدمن: الكود في `functions/api/` و `lib/`، والإعداد في `docs/accounts-setup.md`. أي endpoint أدمن جديد يتحط تحت `functions/api/admin/` عشان `_middleware.js` يحميه.
 - بعد أي تعديل: ابعت رسالة من الفورم على لينك pages.dev، واتأكد إنها وصلت الجدول.
 
 ## Agent skills

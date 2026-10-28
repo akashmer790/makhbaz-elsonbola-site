@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // بيشتغل قبل كل push (من .githooks/pre-push). أي push على main بيتنشر على الموقع على طول،
 // فالفحص ده بيوقف الـ push لو:
-//   1. السيرفر بيحفظ عمود مش موجود في supabase/messages.sql أو مش موجود في جدول Supabase نفسه
-//      (لو اترفع كده، كل رسالة من الفورم هتفشل)
+//   1. السيرفر بيحفظ أو بيقرا عمود مش موجود في supabase/messages.sql أو مش موجود في جدول Supabase نفسه
+//      (لو اترفع كده، كل رسالة من الفورم أو صفحة الأدمن هتفشل)
 //   2. بناء الموقع من business.json فشل
-//   3. bakery-facts.md والصفحة المبنية (dist/index.html) مش متطابقين
+// وبيحذّر (من غير ما يوقف) لو bakery-facts.md بقى قديم عن الصفحة المبنية (dist/index.html)
 // تشغيل يدوي: node scripts/prepush-check.mjs
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -20,13 +20,18 @@ let failed = false;
 const fail = msg => { failed = true; console.error(`✗ ${msg}`); };
 const ok = msg => console.log(`✓ ${msg}`);
 
-// 1) الأعمدة اللي السيرفر بيحفظها
+// 1) الأعمدة اللي السيرفر بيحفظها (الفورم) وبيقراها ويعدّلها (صفحة الأدمن)
 const fn = readFileSync(join(root, 'functions/api/message.js'), 'utf8');
 const rowMatch = fn.match(/const row = \{([^}]*)\}/);
-if (!rowMatch) {
-  fail('مش لاقي `const row = { ... }` في functions/api/message.js، حدّث scripts/prepush-check.mjs');
+const adminFn = readFileSync(join(root, 'functions/api/admin/messages.js'), 'utf8');
+const fieldsMatch = adminFn.match(/const FIELDS = '([^']*)'/);
+if (!rowMatch || !fieldsMatch) {
+  fail('مش لاقي `const row = { ... }` في functions/api/message.js أو `const FIELDS` في functions/api/admin/messages.js، حدّث scripts/prepush-check.mjs');
 } else {
-  const columns = rowMatch[1].split(',').map(s => s.trim().split(':')[0].trim()).filter(Boolean);
+  const columns = [...new Set([
+    ...rowMatch[1].split(',').map(s => s.trim().split(':')[0].trim()),
+    ...fieldsMatch[1].split(','),
+  ].filter(Boolean))];
   const sql = readFileSync(join(root, 'supabase/messages.sql'), 'utf8');
   const missingInSql = columns.filter(c => !new RegExp(`\\b${c}\\b`).test(sql));
   if (missingInSql.length) fail(`الأعمدة دي مش موجودة في supabase/messages.sql: ${missingInSql.join(', ')}`);
@@ -72,7 +77,9 @@ try {
   fail(`بناء الموقع فشل (node scripts/build.mjs):\n${String(e.stderr || e.stdout)}`);
 }
 
-// 3) ورقة المعلومات والصفحة المبنية متطابقين (الملف ده على الجهاز بس، فلو مش موجود نتخطّى)
+// 3) ورقة المعلومات والصفحة المبنية متطابقين (الملف ده على الجهاز بس، فلو مش موجود نتخطّى).
+// تحذير بس مش وقف: الصفحة بتتبني من business.json، وصفحة الأدمن بتعدّل الأسعار فيه على GitHub مباشرة،
+// فالاختلاف معناه إن ورقة المعلومات على الجهاز هي اللي قديمة، مش إن الموقع غلط
 const checker = join(root, '.claude/skills/bakery-content-update/scripts/check-consistency.mjs');
 if (!built) {
   console.warn('! الموقع ما اتبناش، هتخطّى مقارنة bakery-facts.md بالصفحة');
@@ -83,7 +90,7 @@ if (!built) {
     execFileSync(process.execPath, [checker, root], { stdio: 'pipe' });
     ok('bakery-facts.md و dist/index.html متطابقين');
   } catch (e) {
-    fail(`bakery-facts.md و dist/index.html مختلفين:\n${String(e.stdout)}`);
+    console.warn(`! bakery-facts.md قديم، ومختلف عن الصفحة المبنية من business.json. حدّثه من business.json:\n${String(e.stdout)}`);
   }
 }
 

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>حسابي</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap">
+  <link rel="stylesheet" href="/brand.css">
+  <link rel="stylesheet" href="/app.css">
+  <script type="module" src="/account.js"></script>
+</head>
+<body>
+  <main class="wrap" id="page" hidden>
+    <div class="top">
+      <a href="/">← الصفحة الرئيسية</a>
+      <div class="row">
+        <a class="btn" href="/admin" id="admin-link" hidden>صفحة الأدمن</a>
+        <button class="quiet" type="button" id="logout">خروج</button>
+      </div>
+    </div>
+    <h1 id="hello"></h1>
+    <p class="muted">الرسايل اللي بعتّها وانت داخل بحسابك، وردودنا عليها.</p>
+    <p class="notice error" id="error" role="alert" hidden></p>
+    <h2>رسايلي</h2>
+    <ul class="list" id="messages" aria-live="polite"></ul>
+    <p class="card" id="empty" hidden>
+      لسه ما بعتّش رسايل وانت داخل بحسابك.
+      <a href="/#message">ابعتلنا رسالة</a>
+    </p>
+  </main>
+</body>
+</html>

@@ -26,3 +26,25 @@ revoke all on public.messages from anon, authenticated;
 -- الإضافة بتحصل بس من functions/api/message.js على Cloudflare بعد تحقق Turnstile،
 -- بالمفتاح الـ secret (service_role) اللي متخزّن في إعدادات Cloudflare مش في أي ملف.
 grant insert (name, phone, message, wants_updates) on public.messages to service_role;
+
+-- ===== حسابات الزباين وصفحة الأدمن =====
+
+-- الرسالة مربوطة بحساب الزبون لو كان داخل وهو بيبعتها (null لو مش داخل).
+-- لو الحساب اتمسح، الرسالة بتفضل والربط بس اللي بيتشال.
+alter table public.messages
+  add column if not exists user_id uuid references auth.users (id) on delete set null;
+
+-- حالة الرسالة في صفحة الأدمن، والرد اللي بيظهر للزبون في صفحة حسابه
+alter table public.messages
+  add column if not exists status text not null default 'new' check (status in ('new', 'done')),
+  add column if not exists reply text check (char_length(reply) <= 2000),
+  add column if not exists replied_at timestamptz;
+
+create index if not exists messages_user_id_idx on public.messages (user_id, created_at desc);
+create index if not exists messages_status_idx on public.messages (status, created_at desc);
+
+-- برضه من غير ولا سياسة RLS، والزوار والحسابات (anon و authenticated) مالهمش أي صلاحية على الجدول.
+-- الزبون مش بيقرا الجدول مباشرة: functions/api/my/messages.js بتقراه بالمفتاح الـ secret
+-- وبتفلتر بالـ id اللي Supabase أكّده من جلسته. المفتاح ده (service_role) عنده صلاحية كاملة من Supabase نفسه،
+-- فالحماية كلها في الـ functions، وعشان كده المفتاح لازم يفضل في إعدادات Cloudflare وبس.
+revoke all on public.messages from anon, authenticated;
