@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: chocolate-croissant-price
+expected_outcome: |
+  The price of كرواسون شوكولاتة becomes 32 جنيه in both bakery-facts.md and sanbola.html, nothing else changes, the consistency check passes, and the user is shown the change and asked before anything is pushed.

@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: new-product-missing-price
+expected_outcome: |
+  The request has no price or unit, so the response asks for them instead of inventing values, and neither file gets a made-up price.

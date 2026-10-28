@@ -13,13 +13,15 @@ function reply(status, error) {
   return Response.json(error ? { ok: false, error } : { ok: true }, { status });
 }
 
-// تنبيه تيليجرام: لو فشل، الرسالة برضه اتحفظت والزائر مش هيشوف خطأ
-async function notifyTelegram(env, { name, phone, message, wants_updates }) {
-  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return;
+// تنبيه تيليجرام. بيرجّع true لو التنبيه وصل.
+// saved = false معناها إن الحفظ في Supabase فشل، فالتنبيه هو النسخة الوحيدة من الرسالة.
+async function notifyTelegram(env, { name, phone, message, wants_updates }, { saved = true } = {}) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return false;
   const time = new Date().toLocaleString('ar-EG', { timeZone: 'Africa/Cairo', dateStyle: 'medium', timeStyle: 'short' });
   // نص عادي من غير parse_mode، عشان أي رموز يكتبها الزائر ما تبوّظش الرسالة
   const updates = wants_updates ? '✅ عايز يتابع العروض الجديدة' : '— مش عايز عروض';
-  const text = `📩 رسالة جديدة من الموقع\n\n👤 ${name}\n📞 ${phone}\n🕒 ${time}\n${updates}\n\n${message}`;
+  const header = saved ? '📩 رسالة جديدة من الموقع' : '⚠️ رسالة جديدة ما اتحفظتش في الجدول، دي النسخة الوحيدة منها';
+  const text = `${header}\n\n👤 ${name}\n📞 ${phone}\n🕒 ${time}\n${updates}\n\n${message}`;
   try {
     const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
@@ -27,8 +29,30 @@ async function notifyTelegram(env, { name, phone, message, wants_updates }) {
       body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text })
     });
     if (!res.ok) console.error('Telegram notify failed', res.status, await res.text());
+    return res.ok;
   } catch (err) {
     console.error('Telegram notify error', err);
+    return false;
+  }
+}
+
+// الحفظ في Supabase بالمفتاح الـ secret (بيعدّي RLS، والزوار مالهمش صلاحية مباشرة)
+async function saveMessage(env, row) {
+  try {
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/messages', {
+      method: 'POST',
+      headers: {
+        'apikey': env.SUPABASE_SECRET_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(row)
+    });
+    if (!res.ok) console.error('Supabase insert failed', res.status, await res.text());
+    return res.ok;
+  } catch (err) {
+    console.error('Supabase insert error', err);
+    return false;
   }
 }
 
@@ -63,23 +87,16 @@ export async function onRequestPost({ request, env, waitUntil }) {
   }).then(r => r.json());
   if (!verify.success) return reply(403, 'turnstile_failed');
 
-  // الحفظ في Supabase بالمفتاح الـ secret (بيعدّي RLS، والزوار مالهمش صلاحية مباشرة)
-  const res = await fetch(env.SUPABASE_URL + '/rest/v1/messages', {
-    method: 'POST',
-    headers: {
-      'apikey': env.SUPABASE_SECRET_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
-    },
-    body: JSON.stringify({ name, phone, message, wants_updates })
-  });
-  if (!res.ok) {
-    console.error('Supabase insert failed', res.status, await res.text());
-    return reply(502, 'save_failed');
+  const row = { name, phone, message, wants_updates };
+  if (!(await saveMessage(env, row))) {
+    // شبكة أمان: لو الحفظ فشل، الرسالة توصل على تيليجرام بدل ما تضيع.
+    // لو وصلت، الزائر ما يحتاجش يعيد الإرسال.
+    const delivered = await notifyTelegram(env, row, { saved: false });
+    return delivered ? reply(200) : reply(502, 'save_failed');
   }
 
   // الرد على الزائر ما يستناش تيليجرام
-  waitUntil(notifyTelegram(env, { name, phone, message, wants_updates }));
+  waitUntil(notifyTelegram(env, row));
 
   return reply(200);
 }

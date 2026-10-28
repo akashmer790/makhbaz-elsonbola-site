@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: friday-hours-and-note
+expected_outcome: |
+  Friday hours become 1 الضهر to 12 بالليل and a no-delivery-on-Friday note is added, both in bakery-facts.md and sanbola.html, the two files stay consistent, and the user is asked before pushing.

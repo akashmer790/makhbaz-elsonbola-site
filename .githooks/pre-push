@@ -1,0 +1,6 @@
+#!/bin/sh
+# فحص قبل الـ push، لأن أي push على main بيتنشر على الموقع على طول. التفاصيل في scripts/prepush-check.mjs
+# التفعيل مرة واحدة بعد أي clone: git config core.hooksPath .githooks
+NODE=node
+command -v node >/dev/null 2>&1 || NODE="/c/Program Files/nodejs/node.exe"
+exec "$NODE" "$(git rev-parse --show-toplevel)/scripts/prepush-check.mjs"
