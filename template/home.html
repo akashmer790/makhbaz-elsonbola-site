@@ -59,8 +59,26 @@
       100% { stroke-dashoffset: 0; fill-opacity: 1; }
     }
 
+    /* لينك الحساب: صغير فوق على الشمال جوه أول الصفحة (عشان الخلفية المتدرّجة ما تتقطعش)،
+       في الـ 56px اللي فوق اسم المحل، فما بينافسوش */
+    .top-nav {
+      position: absolute;
+      top: 12px;
+      inset-inline-end: 16px;
+    }
+    .top-nav a {
+      color: var(--brand-accent-dark);
+      font-weight: 700;
+      text-decoration: none;
+      border: 1px solid var(--brand-line);
+      background: var(--brand-surface);
+      border-radius: 999px;
+      padding: 4px 14px;
+    }
+
     /* أول الصفحة: اسم المحل بيظهر من اليمين للشمال واللوجو بيترسم */
     .hero {
+      position: relative;
       text-align: center;
       padding: 56px 0 40px;
       background: radial-gradient(120% 80% at 50% 0%, var(--brand-soft) 0%, transparent 70%);
@@ -434,6 +452,7 @@
   <main class="wrap">
 
     <header class="hero">
+      <nav class="top-nav"><a href="/account">حسابي</a></nav>
       <div class="brand">
         <svg class="icon logo" aria-hidden="true"><use href="#i-wheat"/></svg>
         <h1 class="brand-name">{{name}}</h1>
