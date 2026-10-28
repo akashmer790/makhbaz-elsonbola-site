@@ -1,3 +1,5 @@
 ﻿bakery-facts.md
 # كاش أداة cf، فيه بيانات حساب Cloudflare
 .cloudflare/
+# ناتج scripts/build.mjs، بيتبني من جديد في كل نشر
+dist/

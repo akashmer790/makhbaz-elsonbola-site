@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Compares the bakery facts in bakery-facts.md with what public/index.html shows.
+// Compares the bakery facts in bakery-facts.md with what the built page (dist/index.html) shows.
 // Usage: node check-consistency.mjs [project-root]
 // Prints a JSON report and exits 1 if anything differs, 0 if everything matches.
 
@@ -8,8 +8,8 @@ import { join } from 'node:path';
 
 const root = process.argv[2] || process.cwd();
 const factsPath = join(root, 'bakery-facts.md');
-// الصفحات في public/ (هو بس اللي Cloudflare بينشره)
-const htmlPath = join(root, 'public', 'index.html');
+// الصفحة المبنية من business.json (node scripts/build.mjs بيكتبها في dist/، وهو اللي Cloudflare بينشره)
+const htmlPath = join(root, 'dist', 'index.html');
 
 if (!existsSync(factsPath) || !existsSync(htmlPath)) {
   console.log(JSON.stringify({ ok: false, error: 'missing file', factsExists: existsSync(factsPath), htmlExists: existsSync(htmlPath) }, null, 2));

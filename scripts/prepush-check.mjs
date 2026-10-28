@@ -3,7 +3,8 @@
 // فالفحص ده بيوقف الـ push لو:
 //   1. السيرفر بيحفظ عمود مش موجود في supabase/messages.sql أو مش موجود في جدول Supabase نفسه
 //      (لو اترفع كده، كل رسالة من الفورم هتفشل)
-//   2. bakery-facts.md و public/index.html مش متطابقين
+//   2. بناء الموقع من business.json فشل
+//   3. bakery-facts.md والصفحة المبنية (dist/index.html) مش متطابقين
 // تشغيل يدوي: node scripts/prepush-check.mjs
 
 import { readFileSync, existsSync } from 'node:fs';
@@ -61,16 +62,28 @@ if (!rowMatch) {
   }
 }
 
-// 2) ورقة المعلومات والصفحة متطابقين (الملف ده على الجهاز بس، فلو مش موجود نتخطّى)
+// 2) الصفحة بتتبني من business.json؛ لو البناء فشل هنا هيفشل على Cloudflare كمان
+let built = false;
+try {
+  execFileSync(process.execPath, [join(root, 'scripts/build.mjs')], { stdio: 'pipe' });
+  built = true;
+  ok('الموقع اتبنى من business.json في dist/');
+} catch (e) {
+  fail(`بناء الموقع فشل (node scripts/build.mjs):\n${String(e.stderr || e.stdout)}`);
+}
+
+// 3) ورقة المعلومات والصفحة المبنية متطابقين (الملف ده على الجهاز بس، فلو مش موجود نتخطّى)
 const checker = join(root, '.claude/skills/bakery-content-update/scripts/check-consistency.mjs');
-if (!existsSync(join(root, 'bakery-facts.md'))) {
+if (!built) {
+  console.warn('! الموقع ما اتبناش، هتخطّى مقارنة bakery-facts.md بالصفحة');
+} else if (!existsSync(join(root, 'bakery-facts.md'))) {
   console.warn('! bakery-facts.md مش موجود على الجهاز، هتخطّى مقارنته بالصفحة');
 } else if (existsSync(checker)) {
   try {
     execFileSync(process.execPath, [checker, root], { stdio: 'pipe' });
-    ok('bakery-facts.md و public/index.html متطابقين');
+    ok('bakery-facts.md و dist/index.html متطابقين');
   } catch (e) {
-    fail(`bakery-facts.md و public/index.html مختلفين:\n${String(e.stdout)}`);
+    fail(`bakery-facts.md و dist/index.html مختلفين:\n${String(e.stdout)}`);
   }
 }
 
