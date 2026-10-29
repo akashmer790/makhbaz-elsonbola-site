@@ -22,10 +22,10 @@ export const LOGOS = {
   },
 };
 
-// الـ symbol اللي بيتحط في sprite الصفحة الرئيسية
+// الـ symbol اللي بيتحط في sprite الصفحة الرئيسية؛ أول سطر من غير مسافات لأن القالب حاططه في مكانه
 export const logoSymbol = name => {
   const { viewBox, markup } = LOGOS[name];
-  return `    <symbol id="i-${name}" viewBox="${viewBox}">\n${markup}\n    </symbol>`;
+  return `<symbol id="i-${name}" viewBox="${viewBox}">\n${markup}\n    </symbol>`;
 };
 
 // favicon.svg: نفس الرسمة بألوان ثابتة، لأن الأيقونة ما بتقراش brand.css

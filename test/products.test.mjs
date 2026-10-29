@@ -2,12 +2,17 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PRODUCT_ICONS, validateProducts } from '../template/products.mjs';
+import { render } from '../template/render.mjs';
 
 const fino = { name: 'عيش فينو', unit: '5 أرغفة', price: '15 جنيه', icon: 'fino' };
 
-test('every product icon offered to the admin exists in the Template\'s icon sprite', () => {
-  const sprite = readFileSync(new URL('../template/home.html', import.meta.url), 'utf8');
-  for (const icon of PRODUCT_ICONS) assert.match(sprite, new RegExp(`<symbol id="i-${icon}"`), icon);
+test('every product icon offered to the admin is drawn on the home page of a product that uses it', () => {
+  const bakery = JSON.parse(readFileSync(new URL('../business.json', import.meta.url), 'utf8'));
+  for (const icon of PRODUCT_ICONS) {
+    const html = render({ ...bakery, products: [{ ...fino, icon }] })['index.html'];
+    assert.match(html, new RegExp(`<symbol id="i-${icon}"`), icon);
+    assert.match(html, new RegExp(`<use href="#i-${icon}"/>`), icon);
+  }
 });
 
 test('a valid product list comes back trimmed, with only the known fields', () => {

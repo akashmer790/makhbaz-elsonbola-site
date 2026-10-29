@@ -5,16 +5,29 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { render } from '../template/render.mjs';
+import { PRODUCT_ICONS } from '../template/products.mjs';
 
 const bakery = JSON.parse(readFileSync(new URL('../business.json', import.meta.url), 'utf8'));
 const home = business => render(business)['index.html'];
 const withSections = sections => ({ ...bakery, sections: { ...bakery.sections, ...sections } });
+// ids الأيقونات اللي في الـ sprite المخفي أول الصفحة
+const symbols = html => [...html.matchAll(/<symbol id="i-([\w-]+)"/g)].map(m => m[1]);
+const productSymbols = html => symbols(html).filter(id => PRODUCT_ICONS.includes(id));
 
 test('a Business with the products section off gets a home page without it', () => {
   const html = home(withSections({ products: false }));
   assert.doesNotMatch(html, /id="products"/);
   assert.doesNotMatch(html, /المنتجات والأسعار/);
   assert.doesNotMatch(html, /class="product"/);
+  assert.deepEqual(productSymbols(html), []);
+});
+
+test('the home page draws only the product icons its products use (and what those icons draw on)', () => {
+  const only = (...names) => home({ ...bakery, products: bakery.products.filter(p => names.includes(p.name)) });
+  assert.deepEqual(productSymbols(only('بسبوسة')), ['basbousa']);
+  // كرواسون الشوكولاتة مرسوم فوق رسمة الكرواسون السادة
+  assert.deepEqual(productSymbols(only('كرواسون شوكولاتة')), ['croissant', 'croissant-choc']);
+  assert.deepEqual(productSymbols(home(bakery)), ['fino', 'baladi', 'croissant', 'croissant-choc', 'basbousa', 'cake']);
 });
 
 test('a Business with the hours section off gets a home page without it', () => {
@@ -22,6 +35,7 @@ test('a Business with the hours section off gets a home page without it', () => 
   assert.doesNotMatch(html, /id="hours"/);
   assert.doesNotMatch(html, /المواعيد<\/h2>/);
   assert.doesNotMatch(html, /href="#i-clock"/);
+  assert.ok(!symbols(html).includes('clock'));
   assert.doesNotMatch(html, /السبت للخميس/);
 });
 
@@ -30,6 +44,7 @@ test('a Business with the contact section off gets a home page without it', () =
   assert.doesNotMatch(html, /id="contact"/);
   assert.doesNotMatch(html, /العنوان والتواصل/);
   assert.doesNotMatch(html, /href="#i-(pin|phone|scooter)"/);
+  for (const icon of ['pin', 'phone', 'scooter']) assert.ok(!symbols(html).includes(icon), icon);
   assert.doesNotMatch(html, /href="tel:/);
   assert.doesNotMatch(html, /شارع النخيل/);
 });
@@ -47,6 +62,7 @@ test('with the message form off, the page has no form, no Turnstile script and n
   assert.doesNotMatch(html, /id="message"/);
   assert.doesNotMatch(html, /ابعتلنا رسالة/);
   assert.doesNotMatch(html, /href="#i-envelope"/);
+  assert.ok(!symbols(html).includes('envelope'));
   assert.doesNotMatch(html, /<form/);
   assert.doesNotMatch(html, /cf-turnstile|challenges\.cloudflare\.com/);
   assert.doesNotMatch(html, /getElementById\('contact-form'\)|\/api\/message/);
@@ -59,6 +75,8 @@ const allOff = { products: false, hours: false, contact: false, message: false, 
 test('with every section off, the page keeps only the header, with no empty heading or leftover marker', () => {
   const html = home({ ...bakery, sections: allOff });
   assert.doesNotMatch(html, /<section|<h2|href="#i-squiggle"/);
+  // الـ sprite فيه اللوجو بس
+  assert.deepEqual(symbols(html), ['wheat']);
   assert.doesNotMatch(html, /\{\{|\}\}/);
   assert.match(html, /<h1 class="brand-name">مخبز السنبلة<\/h1>/);
   assert.match(html, /<main class="wrap">[\s\S]*<\/main>/);
