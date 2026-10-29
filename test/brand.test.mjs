@@ -107,6 +107,12 @@ test('the bakery\'s pages all load Tajawal from Google Fonts', () => {
   }
 });
 
+test('every page shows the Brand\'s favicon in the tab', () => {
+  for (const [path, html] of pages(render(bakery))) {
+    assert.match(html, /<link rel="icon" href="\/favicon.svg" type="image\/svg\+xml">/, path);
+  }
+});
+
 test('choosing another supported font changes the font link and the font family on every page', () => {
   const site = render({ ...bakery, brand: { ...bakery.brand, font: 'IBM Plex Sans Arabic' } });
   for (const [path, html] of pages(site)) {
