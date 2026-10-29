@@ -75,6 +75,7 @@ const SECTIONS = ['products', 'hours', 'contact', 'message', 'notes'];
 const REQUIRED_TEXT = {
   name: null, tagline: null, about: null, siteUrl: null,
   phone: 'contact', address: 'contact', delivery: 'contact',
+  turnstileSiteKey: 'message',
 };
 
 const isText = value => typeof value === 'string' && value.trim() !== '';

@@ -137,6 +137,14 @@ test('the contact section needs an address and delivery terms while it is on', (
   }
 });
 
+test('the message form needs the Business\'s Turnstile key while it is on', () => {
+  const { turnstileSiteKey: _, ...missing } = bakery;
+  assert.throws(() => render(missing), err => err instanceof BusinessFileError && /"turnstileSiteKey"/.test(err.message));
+  assert.throws(() => render({ ...bakery, turnstileSiteKey: ' ' }), /"turnstileSiteKey"/);
+  const html = render({ ...missing, sections: { ...bakery.sections, message: false } })['index.html'];
+  assert.doesNotMatch(html, /undefined/);
+});
+
 test('a product that isn\'t an object fails the build, naming its position', () => {
   for (const bad of [null, 'عيش فينو']) {
     assert.throws(() => render({ ...bakery, products: [bakery.products[0], bad] }), /المنتج رقم 2/, String(bad));
