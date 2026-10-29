@@ -6,7 +6,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { render } from '../template/render.mjs';
 
-const bakery = JSON.parse(readFileSync(new URL('../business.json', import.meta.url), 'utf8'));
+// المحتوى (المنتجات والأسعار والمواعيد...) متجمّد في fixtures/bakery-content.json زي ما الموقع كان بيعرضه
+// قبل القالب، عشان تعديل سعر في ملف المحل ما يكسرش الـ tests. الهوية والأقسام والإعدادات من business.json نفسه
+const bakery = {
+  ...JSON.parse(readFileSync(new URL('../business.json', import.meta.url), 'utf8')),
+  ...JSON.parse(readFileSync(new URL('./fixtures/bakery-content.json', import.meta.url), 'utf8')),
+};
 const home = business => render(business)['index.html'];
 
 // النص الظاهر من غير tags، عشان نقارن بالكلام اللي الزبون بيشوفه
