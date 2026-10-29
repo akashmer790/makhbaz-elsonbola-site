@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>الأدمن</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="{{fontUrl}}">
+  <link rel="stylesheet" href="/brand.css">
+  <link rel="stylesheet" href="/app.css">
+  <script type="module" src="/admin.js"></script>
+</head>
+<body>
+  <!-- الصفحة نفسها مفيهاش أي بيانات. كل البيانات بتيجي من /api/admin، وهو اللي بيتأكد إنك أدمن -->
+  <main class="wrap">
+    <div class="top">
+      <a href="/account">← حسابي</a>
+      <button class="quiet" type="button" id="logout" hidden>خروج</button>
+    </div>
+    <h1>الأدمن</h1>
+    <p class="notice error" id="denied" role="alert" hidden>الصفحة دي للأدمن بس.</p>
+
+    <div id="panel" hidden>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" aria-selected="true" aria-controls="tab-messages" id="btn-messages">الرسايل</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="tab-subscribers" id="btn-subscribers">أرقام العروض</button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="tab-products" id="btn-products">المنتجات والأسعار</button>
+      </div>
+
+      <section id="tab-messages" role="tabpanel">
+        <div class="row">
+          <label>اعرض
+            <select id="filter">
+              <option value="new">الجديدة بس</option>
+              <option value="done">اللي اتعاملنا معاها</option>
+              <option value="all">الكل</option>
+            </select>
+          </label>
+        </div>
+        <p class="notice" id="messages-status" role="status" hidden></p>
+        <ul class="list" id="messages"></ul>
+        <div class="row"><button class="quiet" type="button" id="more" hidden>اعرض أكتر</button></div>
+      </section>
+
+      <section id="tab-subscribers" role="tabpanel" hidden>
+        <p class="muted">اللي وافقوا في آخر رسالة ليهم إننا نبعتلهم عروض ومنتجات جديدة.</p>
+        <p class="notice" id="subscribers-status" role="status" hidden></p>
+        <div class="row"><button type="button" id="copy-phones" hidden>انسخ كل الأرقام</button></div>
+        <table id="subscribers-table" hidden>
+          <thead><tr><th>الاسم</th><th>الموبايل</th><th>من آخر رسالة</th></tr></thead>
+          <tbody id="subscribers"></tbody>
+        </table>
+      </section>
+
+      <section id="tab-products" role="tabpanel" hidden>
+        <p class="muted">لما تحفظ، الموقع بيتبني من جديد والأسعار الجديدة بتظهر للزباين خلال دقيقة أو اتنين.</p>
+        <p class="notice" id="products-status" role="status" hidden></p>
+        <ul class="list" id="products"></ul>
+        <div class="row">
+          <button class="quiet" type="button" id="add-product" hidden>ضيف منتج</button>
+          <button type="button" id="save-products" hidden>احفظ وانشر</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

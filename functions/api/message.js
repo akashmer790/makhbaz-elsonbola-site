@@ -7,6 +7,8 @@
 //   TELEGRAM_BOT_TOKEN    (secret، من @BotFather)
 //   TELEGRAM_CHAT_ID      (رقم حسابك على تيليجرام)
 
+import { getSession } from '../../lib/session.js';
+
 const PHONE_RE = /^01[0125][0-9]{8}$/;
 
 // نفس اللي الصفحة بتعمله: أرقام عربي أو فارسي → إنجليزي، من غير مسافات أو شرط، و+20 أو 0020 → 0
@@ -108,16 +110,21 @@ export async function onRequestPost({ request, env, waitUntil }) {
   }
   if (!verify?.success) return reply(403, 'turnstile_failed');
 
-  const row = { name, phone, message, wants_updates };
+  // لو الزبون داخل بحسابه، الرسالة بتترابط بيه عشان يشوفها ويشوف الرد في صفحة حسابه.
+  // الـ id من الجلسة اللي Supabase أكّدها بس، وأي user_id في الطلب نفسه بيتجاهل.
+  const { user, cookies } = await getSession(request, env);
+  const withSession = res => { for (const c of cookies) res.headers.append('Set-Cookie', c); return res; };
+
+  const row = { name, phone, message, wants_updates, user_id: user?.id ?? null };
   if (!(await saveMessage(env, row))) {
     // شبكة أمان: لو الحفظ فشل، الرسالة توصل على تيليجرام بدل ما تضيع.
     // لو وصلت، الزائر ما يحتاجش يعيد الإرسال.
     const delivered = await notifyTelegram(env, row, { saved: false });
-    return delivered ? reply(200) : reply(502, 'save_failed');
+    return withSession(delivered ? reply(200) : reply(502, 'save_failed'));
   }
 
   // الرد على الزائر ما يستناش تيليجرام
   waitUntil(notifyTelegram(env, row));
 
-  return reply(200);
+  return withSession(reply(200));
 }

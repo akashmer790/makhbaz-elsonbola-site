@@ -1,5 +1,5 @@
 # هيدرز أمان لكل صفحات الموقع (Cloudflare Pages بيقرا الملف ده؛ ما بيطبّقهوش على functions/).
-# الـ CSP بتسمح بس بالمصادر اللي الصفحة بتستعملها فعلاً:
+# الـ CSP بتسمح بس بالمصادر اللي الصفحة بتستعملها فعلاً (الدخول بجوجل navigation مش fetch، فمش محتاج يتضاف):
 #   Turnstile من challenges.cloudflare.com، والخط من Google Fonts، والفورم بيبعت لـ /api/message.
 # 'unsafe-inline' عشان السكريبتات والستايل اللي جوه index.html. لو ضفت سكريبت أو خط من مكان جديد، ضيفه هنا،
 # وإلا المتصفح هيمنعه.
@@ -8,3 +8,16 @@
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Strict-Transport-Security: max-age=31536000
+
+# صفحات الدخول والحساب والأدمن: CSP أضيق من اللي فوق (من غير 'unsafe-inline' خالص)، لأن صفحة الأدمن
+# بتعرض رسايل كاتبها أي حد، فلو حصل XSS ما يقدرش يشغّل سكريبت. الـ CSP الاتنين بيتطبّقوا مع بعض، فالأضيق هو اللي بيكسب.
+# ومش عايزينها تظهر في جوجل.
+/login
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data:; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
+  X-Robots-Tag: noindex
+/account
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data:; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
+  X-Robots-Tag: noindex
+/admin
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data:; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
+  X-Robots-Tag: noindex

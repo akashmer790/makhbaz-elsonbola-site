@@ -1,79 +1,66 @@
 ---
 name: bakery-content-update
-description: Update the Al-Sanbola bakery site's business info — prices, products, units, opening hours, address, phone, delivery terms, the "what we don't have" notes, tagline or about text — keeping bakery-facts.md and the page (public/index.html) in sync, never inventing missing details, and asking before publishing. Use this whenever the user wants to change, add or remove anything the bakery sells or states about itself, even casually in Egyptian Arabic ("غيّر سعر الكرواسون", "ضيف منتج", "شيل البسبوسة", "الجمعة هنفتح بدري", "غيّر رقم الموبايل", "بقينا نوصّل لحد 5 كيلو"), or asks whether the page and the facts file still match. Not for the contact form, Supabase, Turnstile or Telegram code.
+description: Update what the Al-Sanbola bakery site says or shows by editing its Business file (business.json): prices, products, units, hours, address, phone, delivery terms, the "what we don't have" notes, tagline, about text, Brand colors/font/logo icon, or turning a section on or off. Never invents a missing detail and asks before publishing. Use whenever the user wants to change, add or remove anything the bakery sells or states about itself, even casually in Egyptian Arabic ("غيّر سعر الكرواسون", "ضيف منتج", "شيل البسبوسة", "الجمعة هنفتح بدري", "غيّر رقم الموبايل", "اقفل الفورم"). Not for the contact form, Supabase, Turnstile or Telegram code.
 ---
 
 # Updating the bakery's content
 
-The site has two copies of the same facts, and they drift apart easily:
+**`business.json` is the Business file (ملف المحل): the single source of truth.** Every fact, color and section switch on the site comes from it. `node scripts/build.mjs` renders it through the Template (`template/`) into `dist/`, and Cloudflare Pages runs that build on every push to `main`, so a push is a publish. You edit this one file and nothing else.
 
-- **`bakery-facts.md`**: the source of truth. Every fact on the site comes from here. It is listed in `.gitignore` and lives only on this machine, so it is never committed or pushed.
-- **`public/index.html`**: the public page (the site's home page). Cloudflare Pages publishes only the `public/` folder, and every push to `main` goes live within a minute or two, so a push is a publish.
+Talk to the user in their language (usually Egyptian Arabic) and in plain words.
 
-The job is to change both the same way, change nothing else, and get the user's go-ahead before anything goes live. Talk to the user in their language (usually Egyptian Arabic) and in plain words.
+## 1. Read the Business file first
 
-## 1. Read both files first
-
-Read `bakery-facts.md` and the matching parts of `public/index.html` before deciding anything. You need the current wording and the page's markup to place the change correctly.
-
-If `bakery-facts.md` is missing, don't rebuild it from the page: the page may already be wrong, and the facts file also holds remarks the page leaves out. It has been restored from git history before. Find the last commit that had it (`git log --all --format=%h -- bakery-facts.md`, then check which of those still has the file with `git show <hash>:bakery-facts.md`), tell the user, and ask before restoring it with `git restore --source=<hash> --worktree -- bakery-facts.md`. That keeps it untracked.
+Run `git pull` first: the admin page commits product edits to `business.json` on `main` directly, so the local copy may be behind. Then read `business.json`. The current wording and structure tell you where the change goes and how to write it.
 
 ## 2. Pin down exactly what changes, and ask instead of guessing
 
-These are real prices and promises people will act on, so a guessed detail is worse than a short question. Before editing, make sure you have every value you'd write:
+These are real prices and promises people act on, so a guessed detail is worse than a short question. Before editing, have every value you'll write:
 
-- **New product:** name, unit (القطعة / الكيلو / 5 أرغفة / حسب الطلب...), and price. If any is missing, ask for it. Don't borrow a price from a similar product.
+- **New product:** name, unit (القطعة / الكيلو / 5 أرغفة / حسب الطلب...), and price. Ask for whichever is missing; a similar product's price is not this product's price.
 - **Ambiguous name:** "الكرواسون" matches both كرواسون سادة and كرواسون شوكولاتة. Ask which one, or whether both.
-- **Hours:** you need the day(s) and both the opening and closing time. If the user gives a start date ("من الشهر الجاي"), the page can't schedule a change, so say so and ask whether to change it now or wait.
-- **Removing something:** confirm the exact item if there's any doubt.
+- **Hours:** the day(s) plus both opening and closing time. If the user gives a start date ("من الشهر الجاي"), the page can't schedule a change: say so and ask whether to change it now or wait.
+- **Removing something:** confirm the exact item when there's any doubt.
 
-When something is missing, ask one short, specific question, make no edits, and stop. Change only what was asked. Don't tidy up wording, reorder items or "fix" other facts on the side. If you notice something that looks wrong elsewhere, mention it instead of changing it.
+When a value is missing, ask one short, specific question, leave the file untouched, and stop.
 
-## 3. Edit both files the same way
+Change only what was asked: every other value, its wording and its order stay byte-for-byte as they were. If something elsewhere looks wrong, mention it in your reply.
 
-Copy the patterns already in the files rather than inventing new ones:
+## 3. Edit `business.json`
 
-| Fact | In `bakery-facts.md` | In `public/index.html` |
-| --- | --- | --- |
-| Product | a row in the `## المنتجات والأسعار` table: `\| name \| unit \| price \|` | an `<li class="product" data-reveal style="--i:N">` in `#products`, same order as the table, with `N` counting up from 0 (it staggers the scroll animation), and an icon `<svg class="icon">` before the name |
-| Extra condition on a price | same cell, after a comma: `من 450 جنيه، بالحجز قبلها بيومين` | the price in `.price`, the condition in `<p class="note">` |
-| Hours | a row in the `## المواعيد` table | a `<tr>` in the `#hours` table |
-| Address / phone / delivery | bullets under `## العنوان والتواصل` | the `<li>` items in `#contact` |
-| What we don't have | bullets under `## اللي مش عندنا` | `<li>` items in `#notes` |
-| Tagline | `جملة التعريف: «...»` | `<p class="tagline">` **and** `<meta name="description">` **and** `<meta property="og:description">` |
+Follow the patterns already in the file:
 
-Details that matter:
+- Text is stored exactly as Customers read it: Western digits, `جنيه`, casual Egyptian wording (`7 الصبح`, `11 بالليل`), prices as written (`من 450 جنيه`). A condition on a price (`بالحجز قبلها بيومين`) goes in the product's `note`, not in `price`.
+- Products appear on the page in file order.
+- **Icons:** a product's `icon` names a hand-drawn symbol from the Template's set, listed in `PRODUCT_ICONS` in `template/products.mjs`. For a new product, reuse the closest one and tell the user which; drawing a new icon is a separate design task.
+- **Brand** (colors, font, logo icon) and **section switches** (on/off per section) live in the Business file too, under their own keys. Change the key the user means; the build rejects a bad hex color, a faint form-border color, or an unknown name, with a message naming the field.
+- The renderer derives the call link from `phone`, the meta and link-preview descriptions from `tagline`, the title from `name`, and the card animation order from product position. One edit to the source field updates all of them.
+- Save as UTF-8 without a BOM; `JSON.parse` in the build rejects a BOM.
 
-- Write numbers and prices the way the file already does: Western digits, `جنيه`, and casual Egyptian wording (`7 الصبح`, `11 بالليل`).
-- A phone number change has three places on the page: the visible text, and the `tel:` link (`+20` plus the number without the leading 0 and without spaces).
-- Remarks in parentheses in the facts file, like `(عنوان خيالي)`, are notes for whoever edits the file. They don't go on the page.
-- The page's about line leaves out the leading `مخبز السنبلة،` because the name is already in the `<h1>`.
-- Product icons are hand-drawn SVG symbols in the sprite at the top of `<body>` (`#i-fino`, `#i-baladi`, `#i-croissant`, `#i-croissant-choc`, `#i-basbousa`, `#i-cake`). For a new product, reuse the closest one and tell the user which; drawing a new icon is a separate design task, not part of a content update.
-- Colors, font and other look-and-feel live in `public/brand.css`. A content update doesn't touch it.
+## 4. Verify with the tests and the build
 
-## 4. Check the two files match
-
-Run the bundled checker from the project root:
+From the project root, run both:
 
 ```bash
-node .claude/skills/bakery-content-update/scripts/check-consistency.mjs .
+node --test
+node scripts/build.mjs
 ```
 
-It compares products, units, prices, hours, address, phone and the `tel:` link, delivery, notes, tagline, meta description, og:description and about text, and lists every difference. Fix anything it reports until it prints `"ok": true`. If it reports a difference you didn't cause, leave it alone and tell the user.
+Both must pass. A build failure prints the field at fault: fix your edit and rerun. Then search `dist/index.html` for the new text (for example the new price) to see it on the built page. If a test fails over something you didn't touch, leave it and tell the user.
 
 ## 5. Show the change and ask before publishing
 
-Pushing publishes the page right away, so show the user what will change and wait for a clear yes. Show:
+Show the user:
 
-- a short before → after table of the facts that changed (not raw diffs, unless they ask), and
-- that the checker passed.
+- a short before → after table of the values that changed (not raw diffs, unless they ask), and
+- that the tests and the build passed.
 
-Ask one direct question, such as «أرفع التعديل على الموقع؟». If they decline or want changes, adjust and show it again.
+Ask one direct question, such as «أرفع التعديل على الموقع؟», and wait for a clear yes. If they want changes, adjust and show it again.
 
 ## 6. After the user says yes: commit, push, confirm it's live
 
-1. Commit only `public/index.html`, plus any other tracked file you changed. Never `git add -A` here, and never commit `bakery-facts.md` or the `.cloudflare/` folder. Write a short commit message saying what changed, following the repo's existing commit style.
-2. Push `main`.
-3. Wait for the Cloudflare Pages deployment of that commit, using the `cf` CLI (project `makhbaz-elsonbola-site`). Check that the latest deployment's commit hash is yours and its last stage succeeded.
+1. Commit `business.json` alone, by name (`git add business.json`), with a short message saying what changed, in the repo's commit style.
+2. Push `main`. The pre-push hook reruns the tests and the build and checks the Supabase columns; if it stops the push, show the user its message.
+3. Wait for the Cloudflare Pages deployment of that commit, using the `cf` CLI (project `makhbaz-elsonbola-site`): the latest deployment's commit hash is yours and its last stage succeeded.
 4. Fetch `https://makhbaz-elsonbola-site.pages.dev/` and confirm the new text is there.
-5. Tell the user it's live and what changed. The project's `AGENTS.md` asks for a test message from the form after any change. Remind them in one line that this part is theirs, because the form's Turnstile check needs a real person.
+5. Tell the user it's live and what changed. `AGENTS.md` asks for a test message from the form after any change; remind them in one line that this part is theirs, because the form's Turnstile check needs a real person.

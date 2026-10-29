@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>تسجيل الدخول</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="{{fontUrl}}">
+  <link rel="stylesheet" href="/brand.css">
+  <link rel="stylesheet" href="/app.css">
+  <script type="module" src="/login.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top"><a href="/">← الصفحة الرئيسية</a></div>
+    <h1>تسجيل الدخول</h1>
+    <p class="muted">ادخل بحساب جوجل عشان تشوف رسايلك اللي بعتّها وردودنا عليها.</p>
+    <p class="notice error" id="error" role="alert" hidden></p>
+    <div class="card row">
+      <!-- لينك عادي مش فورم: السيرفر هو اللي بيبدأ الدخول ويودّيك لجوجل -->
+      <a class="btn" href="/api/auth/login">الدخول بحساب جوجل</a>
+      <p class="muted">مش بنشوف الباسورد بتاعك، ومش بناخد غير اسمك وإيميلك.</p>
+    </div>
+  </main>
+</body>
+</html>

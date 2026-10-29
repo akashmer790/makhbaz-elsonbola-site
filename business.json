@@ -4,17 +4,78 @@
   "about": "مخبز عيلة صغير. بنخبز كل يوم الصبح بدري، ومفيش حاجة عندنا بايتة.",
   "siteUrl": "https://makhbaz-elsonbola-site.pages.dev/",
   "disclaimer": "بيانات خيالية للتدريب — المخبز ده مش موجود، والأرقام والأسعار والعنوان متألّفين.",
+  "brand": {
+    "colors": {
+      "bg": "#fbf5ea",
+      "surface": "#ffffff",
+      "ink": "#2b2118",
+      "muted": "#6b5d50",
+      "accent": "#b8692b",
+      "accent-dark": "#8f4e1c",
+      "soft": "#f3dfc1",
+      "line": "#eadcc8",
+      "field": "#9c8670"
+    },
+    "font": "Tajawal",
+    "logo": "wheat"
+  },
+  "sections": {
+    "products": true,
+    "hours": true,
+    "contact": true,
+    "message": true,
+    "notes": true
+  },
   "products": [
-    { "name": "عيش فينو", "unit": "5 أرغفة", "price": "15 جنيه", "icon": "fino" },
-    { "name": "عيش بلدي مخصوص", "unit": "5 أرغفة", "price": "10 جنيه", "icon": "baladi" },
-    { "name": "كرواسون سادة", "unit": "القطعة", "price": "20 جنيه", "icon": "croissant" },
-    { "name": "كرواسون شوكولاتة", "unit": "القطعة", "price": "28 جنيه", "icon": "croissant-choc" },
-    { "name": "بسبوسة", "unit": "الكيلو", "price": "160 جنيه", "icon": "basbousa" },
-    { "name": "تورتة عيد ميلاد", "unit": "حسب الطلب", "price": "من 450 جنيه", "note": "بالحجز قبلها بيومين", "icon": "cake" }
+    {
+      "name": "عيش فينو",
+      "unit": "5 أرغفة",
+      "price": "15 جنيه",
+      "icon": "fino"
+    },
+    {
+      "name": "عيش بلدي مخصوص",
+      "unit": "5 أرغفة",
+      "price": "10 جنيه",
+      "icon": "baladi"
+    },
+    {
+      "name": "كرواسون سادة",
+      "unit": "القطعة",
+      "price": "20 جنيه",
+      "icon": "croissant"
+    },
+    {
+      "name": "كرواسون شوكولاتة",
+      "unit": "القطعة",
+      "price": "28 جنيه",
+      "icon": "croissant-choc"
+    },
+    {
+      "name": "بسبوسة",
+      "unit": "الكيلو",
+      "price": "160 جنيه",
+      "icon": "basbousa"
+    },
+    {
+      "name": "تورتة عيد ميلاد",
+      "unit": "حسب الطلب",
+      "price": "من 450 جنيه",
+      "note": "بالحجز قبلها بيومين",
+      "icon": "cake"
+    }
   ],
   "hours": [
-    { "days": "السبت للخميس", "from": "7 الصبح", "to": "11 بالليل" },
-    { "days": "الجمعة", "from": "2 الضهر", "to": "11 بالليل" }
+    {
+      "days": "السبت للخميس",
+      "from": "7 الصبح",
+      "to": "11 بالليل"
+    },
+    {
+      "days": "الجمعة",
+      "from": "2 الضهر",
+      "to": "11 بالليل"
+    }
   ],
   "address": "12 شارع النخيل، جنب الصيدلية",
   "phone": "0100 000 0000",
