@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // بيبني الموقع: يقرا ملف المحل (business.json)، يدّيه للـ renderer، ويكتب الناتج في dist/
-// ومعاه ملفات القالب الثابتة (template/static: الهيدرز والـ redirects والستايل والأيقونة وصفحة 404).
+// ومعاه ملفات القالب الثابتة (template/static: الهيدرز والـ redirects وسكريبتات وستايل صفحات الحساب).
+// الصفحات و brand.css و favicon.svg بيطلّعهم الـ renderer من ملف المحل.
 // Cloudflare Pages بيشغّله في كل push: Build command = node scripts/build.mjs، Build output = dist
 // تشغيل يدوي: node scripts/build.mjs
 

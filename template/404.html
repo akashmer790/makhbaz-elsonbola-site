@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Cloudflare Pages بيعرض الصفحة دي بكود 404 لأي لينك مش موجود، بدل ما يرجّع الصفحة الرئيسية بكود 200 -->
   <meta name="robots" content="noindex">
-  <title>الصفحة مش موجودة · مخبز السنبلة</title>
+  <title>الصفحة مش موجودة · {{name}}</title>
+  <link rel="stylesheet" href="{{fontUrl}}">
   <link rel="stylesheet" href="/brand.css">
   <style>
     body {
@@ -37,7 +38,7 @@
   <main>
     <h1>الصفحة دي مش موجودة</h1>
     <p>يمكن اللينك اتغيّر أو فيه حرف غلط.</p>
-    <a href="/">ارجع لصفحة مخبز السنبلة</a>
+    <a href="/">ارجع لصفحة {{name}}</a>
   </main>
 </body>
 </html>
