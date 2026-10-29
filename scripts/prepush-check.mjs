@@ -76,7 +76,7 @@ export async function prepushCheck({ root = ROOT, run = runNode, fetch = globalT
           + statements.join('\n\n') + '\n');
       }
       else if (unexpected.length) fail(`جدول messages في Supabase ردّ رد مش متوقع (لازم يكون permission denied 42501):\n  ${unexpected.join('\n  ')}\n  اتأكد إن الجدول موجود، وإن المفتاح الـ publishable صح، وإن RLS شغال.`);
-      else ok('جدول messages في Supabase فيه كل الأعمدة، ومقفول على الزوار');
+      else ok('جدول messages في Supabase فيه كل الأعمدة، ومقفول قدام الزباين');
     }
   }
 

@@ -1,10 +1,13 @@
-// قواعد منتجات المحل اللي صفحة الأدمن بتعدّلها (functions/api/admin/products.js).
-// الأيقونات هي الموجودة في الـ sprite بتاع template/home.html (فيه test بيتأكد إنهم متطابقين).
+// قواعد منتجات المحل اللي صفحة الأدمن بتعدّلها (functions/api/admin/products.js)، والـ renderer بيتأكد بيها من ملف المحل.
+// الأيقونات هي المرسومة في template/product-icons.mjs.
 
-export const PRODUCT_ICONS = ['fino', 'baladi', 'croissant', 'croissant-choc', 'basbousa', 'cake'];
+import { PRODUCT_ICON_DRAWINGS } from './product-icons.mjs';
 
-const MAX_PRODUCTS = 40;
-const LIMITS = { name: 60, unit: 40, price: 40, note: 120 };
+export const PRODUCT_ICONS = Object.keys(PRODUCT_ICON_DRAWINGS);
+
+export const MAX_PRODUCTS = 40;
+// أطول نص مسموح في كل خانة من خانات المنتج
+export const PRODUCT_LIMITS = { name: 60, unit: 40, price: 40, note: 120 };
 
 // بيرجّع { ok: true, products } بالحقول المعروفة بس ومن غير مسافات زيادة،
 // أو { ok: false, field } باسم الخانة الغلط عشان صفحة الأدمن تقول للمستخدم يصلّح إيه
@@ -24,7 +27,7 @@ export function validateProducts(input) {
       if (typeof value !== 'string') return { ok: false, field: `${where}: ${key}` };
       const trimmed = value.trim();
       if (key === 'note' && !trimmed) continue;
-      if (!trimmed || trimmed.length > LIMITS[key]) return { ok: false, field: `${where}: ${key}` };
+      if (!trimmed || trimmed.length > PRODUCT_LIMITS[key]) return { ok: false, field: `${where}: ${key}` };
       product[key] = trimmed;
     }
     if (!PRODUCT_ICONS.includes(raw.icon)) return { ok: false, field: `${where}: icon` };

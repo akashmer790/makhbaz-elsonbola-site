@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { render } from '../template/render.mjs';
+import { render, BusinessFileError } from '../template/render.mjs';
 
 const bakery = JSON.parse(readFileSync(new URL('../business.json', import.meta.url), 'utf8'));
 
@@ -97,6 +97,44 @@ test('a form field border under 3:1 contrast with the page background fails the 
   assert.throws(() => render(withColors({ field: '#b7a796' })), /"brand.colors.field"/);
   assert.throws(() => render(withColors({ bg: '#9c8670' })), /"brand.colors.field"/);
   assert.doesNotThrow(() => render(withColors({ field: '#000', bg: '#fff' })));
+});
+
+test('a product missing its name, unit or price fails the build, naming the field and the product', () => {
+  for (const field of ['name', 'unit', 'price']) {
+    for (const value of [undefined, '  ', 15]) {
+      const products = bakery.products.map(p => p.name === 'بسبوسة' ? { ...p, [field]: value } : p);
+      assert.throws(() => render({ ...bakery, products }), err => err instanceof BusinessFileError
+        && new RegExp(`"${field}"`).test(err.message) && /المنتج رقم 5/.test(err.message), `${field}: ${value}`);
+    }
+  }
+  // المنتج اللي ليه اسم بيتذكر باسمه كمان
+  const products = bakery.products.map(p => p.name === 'بسبوسة' ? { ...p, price: '' } : p);
+  assert.throws(() => render({ ...bakery, products }), /بسبوسة/);
+});
+
+test('the hours section needs its rows while it is on, each with days, from and to', () => {
+  const { hours: _, ...noHours } = bakery;
+  for (const hours of [undefined, [], 'كل يوم', [null], [{ days: 'الجمعة', from: '2 الضهر' }], [{ days: ' ', from: '2', to: '3' }]]) {
+    assert.throws(() => render({ ...noHours, ...(hours === undefined ? {} : { hours }) }), err => err instanceof BusinessFileError && /"hours/.test(err.message), JSON.stringify(hours));
+  }
+  assert.doesNotThrow(() => render({ ...noHours, sections: { ...bakery.sections, hours: false } }));
+});
+
+test('the notes section needs at least one non-empty note while it is on', () => {
+  const { notes: _, ...noNotes } = bakery;
+  for (const notes of [undefined, [], 'ملاحظة', ['  '], [5]]) {
+    assert.throws(() => render({ ...noNotes, ...(notes === undefined ? {} : { notes }) }), err => err instanceof BusinessFileError && /"notes/.test(err.message), JSON.stringify(notes));
+  }
+  assert.doesNotThrow(() => render({ ...noNotes, sections: { ...bakery.sections, notes: false } }));
+});
+
+test('the contact section needs an address and delivery terms while it is on', () => {
+  for (const field of ['address', 'delivery']) {
+    const { [field]: _, ...missing } = bakery;
+    assert.throws(() => render(missing), err => err instanceof BusinessFileError && new RegExp(`"${field}"`).test(err.message), `missing ${field}`);
+    assert.throws(() => render({ ...bakery, [field]: ' ' }), new RegExp(`"${field}"`), `empty ${field}`);
+    assert.doesNotThrow(() => render({ ...missing, sections: { ...bakery.sections, contact: false } }), field);
+  }
 });
 
 test('a product that isn\'t an object fails the build, naming its position', () => {

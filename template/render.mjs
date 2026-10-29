@@ -5,7 +5,8 @@
 // البناء الفعلي (قراية ملف المحل وكتابة dist/) في scripts/build.mjs
 
 import { readFileSync } from 'node:fs';
-import { PRODUCT_ICONS } from './products.mjs';
+import { PRODUCT_ICONS, PRODUCT_LIMITS, MAX_PRODUCTS, validateProducts } from './products.mjs';
+import { productSymbols } from './product-icons.mjs';
 import { LOGOS, logoSymbol, logoFavicon } from './logos.mjs';
 
 const templateFile = name => readFileSync(new URL(`./${name}`, import.meta.url), 'utf8');
@@ -66,10 +67,17 @@ const disclaimerComment = disclaimer => disclaimer ? `    <!-- ${escape(disclaim
 export class BusinessFileError extends Error {}
 const fail = message => { throw new BusinessFileError(`ملف المحل (business.json) فيه غلطة: ${message}`); };
 
-const REQUIRED_TEXT = ['name', 'tagline', 'about', 'siteUrl', 'phone'];
-
 // الأقسام الاختيارية في القالب، وكل واحد ليه مفتاح في "sections" بملف المحل
 const SECTIONS = ['products', 'hours', 'contact', 'message', 'notes'];
+
+// الخانات النصية المطلوبة. اللي ليها قسم بتظهر فيه بس، فمطلوبة طول ما القسم ده شغال
+// (التليفون كمان: لو قسم العنوان والتواصل مقفول، الصفحة ما فيهاش تليفون خالص)
+const REQUIRED_TEXT = {
+  name: null, tagline: null, about: null, siteUrl: null,
+  phone: 'contact', address: 'contact', delivery: 'contact',
+};
+
+const isText = value => typeof value === 'string' && value.trim() !== '';
 
 const HEX_COLOR = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
@@ -87,51 +95,83 @@ const contrast = (a, b) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-// كل قسم اختياري لازم مفتاحه يتكتب صريح: true (شغال) أو false (مقفول)، عشان القسم ما يتقفلش أو يتفتح بالغلط
-function validateSections(sections) {
-  if (!sections || typeof sections !== 'object' || Array.isArray(sections)) {
-    fail(`الخانة "sections" لازم تبقى فيها مفتاح لكل قسم (${SECTIONS.join(', ')})، كل واحد true أو false`);
+// خانة فيها مفتاح لكل اسم من "keys" ومفيش غيرهم: مفتاح مش معروف غالباً غلطة في الاسم،
+// وكل مفتاح معروف لازم يتكتب وقيمته تعدّي isValid
+function requireEachKey(object, field, { keys, missing, unknown, isValid, expected }) {
+  if (!object || typeof object !== 'object' || Array.isArray(object)) fail(`الخانة "${field}" ${missing}`);
+  for (const key of Object.keys(object)) {
+    if (!keys.includes(key)) fail(`الخانة "${field}.${key}" ${unknown}: ${keys.join(', ')}`);
   }
-  for (const id of Object.keys(sections)) {
-    if (!SECTIONS.includes(id)) fail(`الخانة "sections.${id}" مش قسم في القالب؛ الأقسام الموجودة: ${SECTIONS.join(', ')}`);
-  }
-  for (const id of SECTIONS) {
-    const value = sections[id];
-    if (value !== true && value !== false) {
-      fail(`الخانة "sections.${id}" لازم تبقى true (شغال) أو false (مقفول)، مش ${value === undefined ? 'فاضية' : JSON.stringify(value)}`);
-    }
+  for (const key of keys) {
+    const value = object[key];
+    if (!isValid(value)) fail(`الخانة "${field}.${key}" لازم تبقى ${expected}، مش ${value === undefined ? 'فاضية' : JSON.stringify(value)}`);
   }
 }
 
+// منتجات المحل بنفس قواعد صفحة الأدمن (validateProducts)، والرسالة فيها رقم المنتج واسمه والخانة
+function validateProductList(products) {
+  const result = validateProducts(products);
+  if (result.ok) return;
+  if (result.field === 'products') {
+    fail(`الخانة "products" لازم يبقى فيها من 1 لـ ${MAX_PRODUCTS} منتج طول ما قسم المنتجات شغال`);
+  }
+  const [, number, key] = result.field.match(/^product (\d+)(?:: (\w+))?$/);
+  const product = products[number - 1];
+  const which = `المنتج رقم ${number}${isText(product?.name) ? ` ("${product.name}")` : ''}`;
+  if (!key) fail(`${which} لازم يبقى فيه name و unit و price و icon`);
+  if (key === 'icon') {
+    fail(`${which}: الخانة "icon" فيها "${product.icon}"، والأيقونات الموجودة في القالب: ${PRODUCT_ICONS.join(', ')}`);
+  }
+  fail(`${which}: الخانة "${key}" لازم تبقى نص مش فاضي ومش أطول من ${PRODUCT_LIMITS[key]} حرف`);
+}
+
+// قايمة مش فاضية، وكل عنصر فيها بيعدّي check (اللي بيرجّع وصف الغلطة، أو لا حاجة لو سليم)
+function requireList(list, field, [what, one], check) {
+  if (!Array.isArray(list) || list.length === 0) fail(`الخانة "${field}" لازم يبقى فيها ${what} ${one} على الأقل طول ما القسم بتاعها شغال`);
+  for (const [i, item] of list.entries()) {
+    const problem = check(item);
+    if (problem) fail(`الخانة "${field}"، ${what} رقم ${i + 1}: ${problem}`);
+  }
+}
+
+const HOURS_KEYS = ['days', 'from', 'to'];
+const hoursRowProblem = row => {
+  if (!row || typeof row !== 'object' || Array.isArray(row)) return `لازم يبقى فيه ${HOURS_KEYS.join(' و ')}`;
+  const key = HOURS_KEYS.find(k => !isText(row[k]));
+  return key && `الخانة "${key}" ناقصة أو فاضية`;
+};
+
 function validate(business) {
-  validateSections(business.sections);
+  // كل قسم اختياري لازم مفتاحه يتكتب صريح: true (شغال) أو false (مقفول)، عشان القسم ما يتقفلش أو يتفتح بالغلط
+  requireEachKey(business.sections, 'sections', {
+    keys: SECTIONS,
+    missing: `لازم تبقى فيها مفتاح لكل قسم (${SECTIONS.join(', ')})، كل واحد true أو false`,
+    unknown: 'مش قسم في القالب؛ الأقسام الموجودة',
+    isValid: value => value === true || value === false,
+    expected: 'true (شغال) أو false (مقفول)',
+  });
   const on = business.sections;
-  // التليفون بيظهر في قسم العنوان والتواصل بس، فمطلوب لما القسم ده شغال
-  for (const field of REQUIRED_TEXT.filter(f => f !== 'phone' || on.contact)) {
-    const value = business[field];
-    if (typeof value !== 'string' || !value.trim()) fail(`الخانة "${field}" ناقصة أو فاضية`);
+  for (const [field, section] of Object.entries(REQUIRED_TEXT)) {
+    if ((section === null || on[section]) && !isText(business[field])) fail(`الخانة "${field}" ناقصة أو فاضية`);
   }
   // موبايل مصري: 11 رقم يبدأ بـ 010 أو 011 أو 012 أو 015، والمسافات بين الأرقام مسموحة
   if (on.contact && !/^01[0125]\d{8}$/.test(business.phone.replace(/\s/g, ''))) {
     fail(`الخانة "phone" لازم تبقى موبايل مصري (11 رقم يبدأ بـ 010 أو 011 أو 012 أو 015)، مش "${business.phone}"`);
   }
-  if (on.products && (!Array.isArray(business.products) || business.products.length === 0)) {
-    fail('الخانة "products" لازم يبقى فيها منتج واحد على الأقل طول ما قسم المنتجات شغال');
-  }
+  if (on.products) validateProductList(business.products);
+  if (on.hours) requireList(business.hours, 'hours', ['سطر', 'واحد'], hoursRowProblem);
+  if (on.notes) requireList(business.notes, 'notes', ['ملاحظة', 'واحدة'], note => !isText(note) && 'لازم تبقى نص مش فاضي');
   // هوية المحل: كل لون من ألوان القالب موجود وhex، ومفيش لون القالب ما بيستعملوش (غالباً غلطة في الاسم)
   const { brand } = business;
   if (!brand || typeof brand !== 'object') fail('الخانة "brand" (ألوان المحل وخطه ولوجو) ناقصة');
   const { colors } = brand;
-  if (!colors || typeof colors !== 'object') fail(`الخانة "brand.colors" ناقصة، ولازم يبقى فيها: ${COLOR_TOKENS.join(', ')}`);
-  for (const token of Object.keys(colors)) {
-    if (!COLOR_TOKENS.includes(token)) fail(`الخانة "brand.colors.${token}" القالب ما بيستعملهاش؛ الألوان المعروفة: ${COLOR_TOKENS.join(', ')}`);
-  }
-  for (const token of COLOR_TOKENS) {
-    const value = colors[token];
-    if (typeof value !== 'string' || !HEX_COLOR.test(value)) {
-      fail(`الخانة "brand.colors.${token}" لازم تبقى لون hex زي #b8692b، مش "${value}"`);
-    }
-  }
+  requireEachKey(colors, 'brand.colors', {
+    keys: COLOR_TOKENS,
+    missing: `ناقصة، ولازم يبقى فيها: ${COLOR_TOKENS.join(', ')}`,
+    unknown: 'القالب ما بيستعملهاش؛ الألوان المعروفة',
+    isValid: value => typeof value === 'string' && HEX_COLOR.test(value),
+    expected: 'لون hex زي #b8692b',
+  });
   // حدود خانات الفورم لازم تبان على خلفية الصفحة (تباين 3:1 على الأقل)
   const fieldContrast = contrast(colors.field, colors.bg);
   if (fieldContrast < 3) {
@@ -145,31 +185,31 @@ function validate(business) {
   if (!Object.hasOwn(LOGOS, brand.logo)) {
     fail(`الخانة "brand.logo" فيها "${brand.logo}"، واللوجوهات الموجودة في القالب: ${Object.keys(LOGOS).join(', ')}`);
   }
-  for (const [i, product] of (on.products ? business.products : []).entries()) {
-    if (!product || typeof product !== 'object') fail(`المنتج رقم ${i + 1} لازم يبقى فيه name و unit و price و icon`);
-    if (!PRODUCT_ICONS.includes(product.icon)) {
-      fail(`المنتج "${product.name}": الخانة "icon" فيها "${product.icon}"، والأيقونات الموجودة في القالب: ${PRODUCT_ICONS.join(', ')}`);
-    }
-  }
 }
 
 // الأقسام الاختيارية؛ كل واحد في القالب محطوط بين {{#قسم}} و {{/قسم}}، كل علامة في سطر لوحدها.
 // القسم الشغال بيفضل من غير العلامتين، والمقفول بيتشال كله ومعاه السطر الفاضي اللي بعده.
-// قسم الفورم (message) ليه بلوكين: الفورم نفسه، وسكريبت Turnstile وسكريبت الفورم آخر الصفحة
+// قسم ممكن يبقى ليه أكتر من بلوك: أيقوناته في الـ sprite أول الصفحة، والقسم نفسه، وقسم الفورم (message) كمان سكريبت
+// Turnstile وسكريبت الفورم آخر الصفحة. {{#anySection}} للحاجات المشتركة بين الأقسام (الـ squiggle تحت كل عنوان).
 const SECTION_BLOCK = /^\{\{#(\w+)\}\}\r?\n[\s\S]*?^\{\{\/\1\}\}\r?\n(?:\r?\n)?/gm;
 const SECTION_MARK = /^\{\{[#/]\w+\}\}\r?\n/gm;
-const keepSections = (template, sections) => template.replace(SECTION_BLOCK, (block, id) => {
-  if (!SECTIONS.includes(id)) throw new Error(`القالب فيه قسم {{#${id}}} والـ renderer ما يعرفوش`);
-  return sections[id] ? block.replace(SECTION_MARK, '') : '';
-});
+const keepSections = (template, sections) => {
+  const shown = { ...sections, anySection: SECTIONS.some(id => sections[id]) };
+  return template.replace(SECTION_BLOCK, (block, id) => {
+    if (!Object.hasOwn(shown, id)) throw new Error(`القالب فيه قسم {{#${id}}} والـ renderer ما يعرفوش`);
+    return shown[id] ? block.replace(SECTION_MARK, '') : '';
+  });
+};
 
 export function render(business) {
   validate(business);
   // قيم الهوية اتأكدنا منها في validate (hex، خط من FONTS، لوجو من LOGOS)، فمش محتاجة escape
   const { colors, font, logo } = business.brand;
+  // رابط الخط هو الحاجة الوحيدة من الهوية اللي في كل الصفحات
+  const pageSlots = { fontUrl: fontUrl(font) };
   const brandSlots = {
+    ...pageSlots,
     bg: colors.bg,
-    fontUrl: fontUrl(font),
     logo,
     logoSymbol: logoSymbol(logo),
   };
@@ -179,6 +219,7 @@ export function render(business) {
     tagline: () => escape(business.tagline),
     about: () => escape(business.about),
     products: () => business.products.map(productCard).join('\n'),
+    productSymbols: () => productSymbols(business.products.map(p => p.icon)),
     hours: () => business.hours.map(hoursRow).join('\n'),
     address: () => escape(business.address),
     phone: () => escape(business.phone),
@@ -194,7 +235,7 @@ export function render(business) {
     'index.html': fill(keepSections(homeTemplate, business.sections), slots),
     'brand.css': fill(brandTemplate, { ...colors, fontFamily: fontFamily(font) }),
     'favicon.svg': logoFavicon(logo, colors),
-    '404.html': fill(notFoundTemplate, { name: slots.name, fontUrl: brandSlots.fontUrl }),
-    ...Object.fromEntries(Object.entries(accountPages).map(([name, page]) => [name, fill(page, { fontUrl: brandSlots.fontUrl })])),
+    '404.html': fill(notFoundTemplate, { ...pageSlots, name: slots.name }),
+    ...Object.fromEntries(Object.entries(accountPages).map(([name, page]) => [name, fill(page, pageSlots)])),
   };
 }
