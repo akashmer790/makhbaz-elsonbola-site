@@ -1,0 +1,15 @@
+/* هوية المحل: الـ renderer بيبني الملف ده من "brand" في ملف المحل (business.json)، فما تعدّلوش في dist/.
+   الخط بيتحمّل من رابط Google Fonts اللي الـ renderer بيحطّه في كل صفحة. */
+:root {
+  --brand-font: {{fontFamily}};
+
+  --brand-bg: {{bg}};          /* خلفية الصفحة */
+  --brand-surface: {{surface}};     /* الكروت */
+  --brand-ink: {{ink}};         /* الكلام */
+  --brand-muted: {{muted}};       /* الكلام الثانوي */
+  --brand-accent: {{accent}};      /* اللون الأساسي: الأسعار والزراير وخط الأيقونات */
+  --brand-accent-dark: {{accent-dark}}; /* العناوين واسم المحل */
+  --brand-soft: {{soft}};        /* اللون التاني في الأيقونات والخلفيات الهادية */
+  --brand-line: {{line}};        /* الحدود */
+  --brand-field: {{field}};       /* حدود خانات الفورم: لازم تباين 3:1 على الأقل مع --brand-bg */
+}

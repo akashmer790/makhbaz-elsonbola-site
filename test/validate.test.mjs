@@ -43,12 +43,42 @@ test('a product icon outside the Template\'s icon set fails the build, naming th
   assert.throws(() => render({ ...bakery, products: noIcon }), /عيش فينو/);
 });
 
-// ألوان هوية المخبز النهارده (template/static/brand.css)
+// ألوان هوية المخبز (زي brand.css اللي كان في template/static قبل ما يتبني من ملف المحل)
 const bakeryColors = {
   bg: '#fbf5ea', surface: '#ffffff', ink: '#2b2118', muted: '#6b5d50', accent: '#b8692b',
   'accent-dark': '#8f4e1c', soft: '#f3dfc1', line: '#eadcc8', field: '#9c8670',
 };
-const withColors = colors => ({ ...bakery, brand: { colors: { ...bakeryColors, ...colors } } });
+const withColors = colors => ({ ...bakery, brand: { ...bakery.brand, colors: { ...bakeryColors, ...colors } } });
+const withBrand = brand => ({ ...bakery, brand: { ...bakery.brand, ...brand } });
+
+test('a Business file without a Brand fails the build, naming the field', () => {
+  const { brand: _, ...noBrand } = bakery;
+  assert.throws(() => render(noBrand), /"brand"/);
+});
+
+test('a missing Brand color fails the build, naming the color', () => {
+  for (const token of Object.keys(bakeryColors)) {
+    const { [token]: _, ...colors } = bakeryColors;
+    assert.throws(() => render({ ...bakery, brand: { ...bakery.brand, colors } }), new RegExp(`"brand.colors.${token}"`), token);
+  }
+  assert.throws(() => render(withBrand({ colors: undefined })), /"brand.colors"/);
+});
+
+test('a Brand color the Template doesn\'t use fails the build, naming it', () => {
+  assert.throws(() => render(withColors({ acent: '#b8692b' })), /"brand.colors.acent"/);
+});
+
+test('a font outside the Template\'s supported set fails the build, naming the field and the choices', () => {
+  for (const font of ['Comic Sans MS', '', undefined, 'tajawal']) {
+    assert.throws(() => render(withBrand({ font })), err => /"brand.font"/.test(err.message) && /Tajawal/.test(err.message) && /Cairo/.test(err.message), String(font));
+  }
+});
+
+test('a logo outside the Template\'s logo set fails the build, naming the field', () => {
+  for (const logo of ['skull', '', undefined, 'fino']) {
+    assert.throws(() => render(withBrand({ logo })), err => /"brand.logo"/.test(err.message) && /wheat/.test(err.message), String(logo));
+  }
+});
 
 test('the bakery\'s current Brand colors pass validation, in long or short hex', () => {
   assert.doesNotThrow(() => render(withColors({})));
