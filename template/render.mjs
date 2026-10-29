@@ -31,10 +31,10 @@ const fontFamily = font => `"${font}", "Segoe UI", Tahoma, Arial, sans-serif`;
 export const COLOR_TOKENS = ['bg', 'surface', 'ink', 'muted', 'accent', 'accent-dark', 'soft', 'line', 'field'];
 
 // بيحط قيم الـ slots مكان {{key}}. function مش string في replace، عشان $& و $1 في نص المحل ما يتفهموش كأوامر.
-// slot مكتوب غلط في القالب يوقّف البناء، بدل ما الصفحة تعرض "undefined"
+// slot مكتوب غلط في القالب يوقّف البناء، بدل ما الصفحة تعرض "undefined". الـ slot ممكن يبقى قيمة أو function بتتحسب لما تتطلب
 const fill = (template, slots) => template.replace(/\{\{([\w-]+)\}\}/g, (_, key) => {
   if (!(key in slots)) throw new Error(`القالب فيه {{${key}}} والـ renderer ما يعرفوش`);
-  return slots[key];
+  return typeof slots[key] === 'function' ? slots[key]() : slots[key];
 });
 
 const escape = value => String(value)
@@ -68,6 +68,9 @@ const fail = message => { throw new BusinessFileError(`ملف المحل (busine
 
 const REQUIRED_TEXT = ['name', 'tagline', 'about', 'siteUrl', 'phone'];
 
+// الأقسام الاختيارية في القالب، وكل واحد ليه مفتاح في "sections" بملف المحل
+const SECTIONS = ['products', 'hours', 'contact', 'message', 'notes'];
+
 const HEX_COLOR = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
 // نسبة التباين بتاعة WCAG بين لونين hex (من 1 لـ 21)
@@ -84,18 +87,35 @@ const contrast = (a, b) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
+// كل قسم اختياري لازم مفتاحه يتكتب صريح: true (شغال) أو false (مقفول)، عشان القسم ما يتقفلش أو يتفتح بالغلط
+function validateSections(sections) {
+  if (!sections || typeof sections !== 'object' || Array.isArray(sections)) {
+    fail(`الخانة "sections" لازم تبقى فيها مفتاح لكل قسم (${SECTIONS.join(', ')})، كل واحد true أو false`);
+  }
+  for (const id of Object.keys(sections)) {
+    if (!SECTIONS.includes(id)) fail(`الخانة "sections.${id}" مش قسم في القالب؛ الأقسام الموجودة: ${SECTIONS.join(', ')}`);
+  }
+  for (const id of SECTIONS) {
+    const value = sections[id];
+    if (value !== true && value !== false) {
+      fail(`الخانة "sections.${id}" لازم تبقى true (شغال) أو false (مقفول)، مش ${value === undefined ? 'فاضية' : JSON.stringify(value)}`);
+    }
+  }
+}
+
 function validate(business) {
-  for (const field of REQUIRED_TEXT) {
+  validateSections(business.sections);
+  const on = business.sections;
+  // التليفون بيظهر في قسم العنوان والتواصل بس، فمطلوب لما القسم ده شغال
+  for (const field of REQUIRED_TEXT.filter(f => f !== 'phone' || on.contact)) {
     const value = business[field];
     if (typeof value !== 'string' || !value.trim()) fail(`الخانة "${field}" ناقصة أو فاضية`);
   }
   // موبايل مصري: 11 رقم يبدأ بـ 010 أو 011 أو 012 أو 015، والمسافات بين الأرقام مسموحة
-  if (!/^01[0125]\d{8}$/.test(business.phone.replace(/\s/g, ''))) {
+  if (on.contact && !/^01[0125]\d{8}$/.test(business.phone.replace(/\s/g, ''))) {
     fail(`الخانة "phone" لازم تبقى موبايل مصري (11 رقم يبدأ بـ 010 أو 011 أو 012 أو 015)، مش "${business.phone}"`);
   }
-  // مفاتيح الأقسام لسه جاية؛ لحد ما تيجي، قسم من غير مفتاح يعتبر شغال
-  const productsOn = business.sections?.products !== false;
-  if (productsOn && (!Array.isArray(business.products) || business.products.length === 0)) {
+  if (on.products && (!Array.isArray(business.products) || business.products.length === 0)) {
     fail('الخانة "products" لازم يبقى فيها منتج واحد على الأقل طول ما قسم المنتجات شغال');
   }
   // هوية المحل: كل لون من ألوان القالب موجود وhex، ومفيش لون القالب ما بيستعملوش (غالباً غلطة في الاسم)
@@ -125,13 +145,23 @@ function validate(business) {
   if (!Object.hasOwn(LOGOS, brand.logo)) {
     fail(`الخانة "brand.logo" فيها "${brand.logo}"، واللوجوهات الموجودة في القالب: ${Object.keys(LOGOS).join(', ')}`);
   }
-  for (const [i, product] of (business.products ?? []).entries()) {
+  for (const [i, product] of (on.products ? business.products : []).entries()) {
     if (!product || typeof product !== 'object') fail(`المنتج رقم ${i + 1} لازم يبقى فيه name و unit و price و icon`);
     if (!PRODUCT_ICONS.includes(product.icon)) {
       fail(`المنتج "${product.name}": الخانة "icon" فيها "${product.icon}"، والأيقونات الموجودة في القالب: ${PRODUCT_ICONS.join(', ')}`);
     }
   }
 }
+
+// الأقسام الاختيارية؛ كل واحد في القالب محطوط بين {{#قسم}} و {{/قسم}}، كل علامة في سطر لوحدها.
+// القسم الشغال بيفضل من غير العلامتين، والمقفول بيتشال كله ومعاه السطر الفاضي اللي بعده.
+// قسم الفورم (message) ليه بلوكين: الفورم نفسه، وسكريبت Turnstile وسكريبت الفورم آخر الصفحة
+const SECTION_BLOCK = /^\{\{#(\w+)\}\}\r?\n[\s\S]*?^\{\{\/\1\}\}\r?\n(?:\r?\n)?/gm;
+const SECTION_MARK = /^\{\{[#/]\w+\}\}\r?\n/gm;
+const keepSections = (template, sections) => template.replace(SECTION_BLOCK, (block, id) => {
+  if (!SECTIONS.includes(id)) throw new Error(`القالب فيه قسم {{#${id}}} والـ renderer ما يعرفوش`);
+  return sections[id] ? block.replace(SECTION_MARK, '') : '';
+});
 
 export function render(business) {
   validate(business);
@@ -143,24 +173,25 @@ export function render(business) {
     logo,
     logoSymbol: logoSymbol(logo),
   };
+  // كل slot بيتحسب بس لو اتطلب، عشان قسم مقفول ممكن ما يبقاش ليه بيانات في ملف المحل خالص
   const slots = {
-    name: escape(business.name),
-    tagline: escape(business.tagline),
-    about: escape(business.about),
-    products: business.products.map(productCard).join('\n'),
-    hours: business.hours.map(hoursRow).join('\n'),
-    address: escape(business.address),
-    phone: escape(business.phone),
-    tel: escape(telLink(business.phone)),
-    delivery: escape(business.delivery),
-    notes: business.notes.map(noteItem).join('\n'),
-    siteUrl: escape(business.siteUrl),
-    turnstileSiteKey: escape(business.turnstileSiteKey),
-    disclaimer: disclaimerComment(business.disclaimer),
+    name: () => escape(business.name),
+    tagline: () => escape(business.tagline),
+    about: () => escape(business.about),
+    products: () => business.products.map(productCard).join('\n'),
+    hours: () => business.hours.map(hoursRow).join('\n'),
+    address: () => escape(business.address),
+    phone: () => escape(business.phone),
+    tel: () => escape(telLink(business.phone)),
+    delivery: () => escape(business.delivery),
+    notes: () => business.notes.map(noteItem).join('\n'),
+    siteUrl: () => escape(business.siteUrl),
+    turnstileSiteKey: () => escape(business.turnstileSiteKey),
+    disclaimer: () => disclaimerComment(business.disclaimer),
     ...brandSlots,
   };
   return {
-    'index.html': fill(homeTemplate, slots),
+    'index.html': fill(keepSections(homeTemplate, business.sections), slots),
     'brand.css': fill(brandTemplate, { ...colors, fontFamily: fontFamily(font) }),
     'favicon.svg': logoFavicon(logo, colors),
     '404.html': fill(notFoundTemplate, { name: slots.name, fontUrl: brandSlots.fontUrl }),

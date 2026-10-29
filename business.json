@@ -19,6 +19,13 @@
     "font": "Tajawal",
     "logo": "wheat"
   },
+  "sections": {
+    "products": true,
+    "hours": true,
+    "contact": true,
+    "message": true,
+    "notes": true
+  },
   "products": [
     {
       "name": "عيش فينو",
