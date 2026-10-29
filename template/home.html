@@ -461,6 +461,7 @@
       <p class="about">{{about}}</p>
     </header>
 
+{{#products}}
     <section id="products">
       <div data-reveal>
         <h2 class="section-title">المنتجات والأسعار</h2>
@@ -470,7 +471,9 @@
 {{products}}
       </ul>
     </section>
+{{/products}}
 
+{{#hours}}
     <section id="hours">
       <div data-reveal>
         <h2 class="section-title"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-clock"/></svg>المواعيد</h2>
@@ -485,7 +488,9 @@
         </tbody>
       </table>
     </section>
+{{/hours}}
 
+{{#contact}}
     <section id="contact">
       <div data-reveal>
         <h2 class="section-title">العنوان والتواصل</h2>
@@ -497,7 +502,9 @@
         <li><svg class="icon icon-sm" aria-hidden="true"><use href="#i-scooter"/></svg><span><strong>التوصيل:</strong> {{delivery}}</span></li>
       </ul>
     </section>
+{{/contact}}
 
+{{#message}}
     <section id="message">
       <div data-reveal>
         <h2 class="section-title"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-envelope"/></svg>ابعتلنا رسالة</h2>
@@ -527,7 +534,9 @@
       </form>
       <p class="form-done" id="form-done" role="status" hidden>وصلتنا رسالتك، هنكلّمك في نفس اليوم.</p>
     </section>
+{{/message}}
 
+{{#notes}}
     <section id="notes">
       <div data-reveal>
         <h2 class="section-title">ملاحظات</h2>
@@ -537,6 +546,7 @@
 {{notes}}
       </ul>
     </section>
+{{/notes}}
 
 {{disclaimer}}
   </main>
@@ -559,6 +569,7 @@
       items.forEach(el => io.observe(el));
     })();
   </script>
+{{#message}}
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <script>
     // الفورم بيبعت لـ /api/message (functions/api/message.js)، وهو اللي بيتأكد من Turnstile ويحفظ في Supabase
@@ -641,5 +652,6 @@
       }
     });
   </script>
+{{/message}}
 </body>
 </html>

@@ -4,6 +4,13 @@
   "about": "مخبز عيلة صغير. بنخبز كل يوم الصبح بدري، ومفيش حاجة عندنا بايتة.",
   "siteUrl": "https://makhbaz-elsonbola-site.pages.dev/",
   "disclaimer": "بيانات خيالية للتدريب — المخبز ده مش موجود، والأرقام والأسعار والعنوان متألّفين.",
+  "sections": {
+    "products": true,
+    "hours": true,
+    "contact": true,
+    "message": true,
+    "notes": true
+  },
   "products": [
     {
       "name": "عيش فينو",

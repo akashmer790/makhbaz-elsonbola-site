@@ -24,7 +24,8 @@ test('the products section needs at least one product while it is on', () => {
   assert.throws(() => render({ ...bakery, products: [] }), /"products"/);
   const { products: _, ...noProducts } = bakery;
   assert.throws(() => render(noProducts), /"products"/);
-  assert.throws(() => render({ ...bakery, sections: { products: true }, products: [] }), /"products"/);
+  assert.throws(() => render({ ...bakery, sections: { ...bakery.sections, products: true }, products: [] }), /"products"/);
+  assert.doesNotThrow(() => render({ ...bakery, sections: { ...bakery.sections, products: false }, products: [] }));
 });
 
 test('a phone that isn\'t an Egyptian mobile number fails the build, naming the field', () => {
